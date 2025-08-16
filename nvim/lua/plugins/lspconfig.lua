@@ -80,11 +80,11 @@ return {
             capabilities = capabilities,
         }
 
-        lspconfig.harper_ls.setup {
-            cmd = { '/home/stephane/perso/oss/harper/target/debug/harper-ls', '--stdio' },
-            -- TODO: make a PR, remove once merged.
-            filetypes = { 'c', 'cpp', 'ocaml', 'ocaml_interface', 'rust', 'gitcommit' },
-        }
+        --        lspconfig.harper_ls.setup {
+        --            cmd = { '/home/stephane/perso/oss/harper/target/debug/harper-ls', '--stdio' },
+        --            -- TODO: make a PR, remove once merged.
+        --            filetypes = { 'c', 'cpp', 'ocaml', 'ocaml_interface', 'rust', 'gitcommit' },
+        --        }
 
         -- Format on save using LSP capabilities.
         vim.api.nvim_create_autocmd("LspAttach", {

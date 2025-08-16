@@ -22,3 +22,10 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 -- Less confusing page up and page down.
 vim.keymap.set({ "n", "v", "i" }, "<C-d>", '<C-d>zz')
 vim.keymap.set({ "n", "v", "i" }, "<C-u>", '<C-u>zz')
+
+vim.keymap.set("n", "<leader>m", function()
+    local previous_makeprg = vim.g.makeprg;
+    vim.g.makeprg = "m";
+    vim.api.nvim_command("make");
+    vim.g.makeprog = previous_makeprg;
+end)
