@@ -37,6 +37,31 @@ vim.opt.colorcolumn = "80"
 vim.opt.listchars = "trail:-"
 vim.opt.list = true
 
+-- Highlight trailing whitespace with a red background. matchadd is per-window,
+-- so re-apply on each new window; re-apply the hl on ColorScheme since plugin
+-- colorschemes load after this file and would otherwise wipe it.
+local trailing = vim.api.nvim_create_augroup("TrailingWhitespace", { clear = true })
+
+local function set_trailing_hl()
+    vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#ff5555" })
+end
+set_trailing_hl()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+    group = trailing,
+    callback = set_trailing_hl,
+})
+
+vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter" }, {
+    group = trailing,
+    callback = function()
+        for _, m in ipairs(vim.fn.getmatches()) do
+            if m.group == "ExtraWhitespace" then return end
+        end
+        vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
+    end,
+})
+
 -- leader keys, have to be set before loading plugins.
 vim.g.mapleader = " "
 vim.g.localleader = " "
