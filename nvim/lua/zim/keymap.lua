@@ -27,5 +27,5 @@ vim.keymap.set("n", "<leader>m", function()
     local previous_makeprg = vim.g.makeprg;
     vim.g.makeprg = "m";
     vim.api.nvim_command("make");
-    vim.g.makeprog = previous_makeprg;
+    vim.g.makeprg = previous_makeprg;
 end)

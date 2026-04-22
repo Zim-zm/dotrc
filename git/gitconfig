@@ -31,5 +31,5 @@
     # When using --word-diff, assume --word-diff-regex=.
     wordRegex = .
 
-[init=
+[init]
     defaultBranch = main
