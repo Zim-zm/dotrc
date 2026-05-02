@@ -55,6 +55,8 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter" }, {
     group = trailing,
     callback = function()
+        if vim.api.nvim_win_get_config(0).relative ~= "" then return end
+        if vim.bo.buftype ~= "" then return end
         for _, m in ipairs(vim.fn.getmatches()) do
             if m.group == "ExtraWhitespace" then return end
         end
