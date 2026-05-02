@@ -25,7 +25,7 @@ return {
             { '<C-j>', function() require("luasnip").jump(-1) end, mode = { "i", "s" } },
             { '<C-k>', function() require("luasnip").jump(1) end,  mode = { "i", "s" } },
             {
-                '<C-e>',
+                '<C-u>',
                 function()
                     local ls = require("luasnip");
                     if ls.choice_active() then
@@ -48,8 +48,8 @@ return {
         version = '*',
         opts = {
             keymap = { preset = 'default' },
+            snippets = { preset = 'luasnip' },
         },
-        snippets = { preset = 'luasnip' },
         opts_extend = { "sources.default" }
     },
 
