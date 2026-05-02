@@ -1,0 +1,2 @@
+gtk-single-instance = true
+window-inherit-working-directory = false
