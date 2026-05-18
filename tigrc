@@ -1,0 +1,47 @@
+# Vim-style navigation for tig
+# Add to ~/.tigrc
+
+# -- Motion --
+bind generic g        move-first-line
+bind generic G        move-last-line
+bind generic <C-F>    move-page-down
+bind generic <C-B>    move-page-up
+bind generic <C-D>    move-half-page-down
+bind generic <C-U>    move-half-page-up
+
+# -- Scrolling --
+bind generic <C-E>    scroll-line-down
+bind generic <C-Y>    scroll-line-up
+
+# -- Search (already vim-like by default) --
+bind generic /        search
+bind generic ?        search-back
+bind generic n        find-next
+bind generic N        find-prev
+
+# -- View management --
+bind generic q        view-close-no-quit
+bind generic Q        quit
+bind generic <Esc>    view-close
+
+# -- Remap displaced defaults --
+# 'g' was view-grep, remap to <C-G>
+bind generic <C-G>    view-grep
+# 'G' in main was toggle graph, remap to |
+bind main    |        :toggle commit-title-graph
+# 'n' in search is already find-next (compatible)
+bind search  <C-N>    find-next
+bind search  <C-P>    find-prev
+
+# -- Blame navigation (already defaults) --
+# ,         go to parent commit
+# <         go back
+
+# -- Splits / tabs --
+bind generic <Tab>    view-next
+bind generic H        view-main
+bind generic B        view-blame
+bind generic T        view-tree
+bind generic L        view-log
+bind generic S        view-status
+bind generic R        refresh
