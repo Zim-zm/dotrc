@@ -36,4 +36,10 @@ vim.keymap.set("n", "<leader>m", function()
     vim.o.makeprg = "m";
     vim.api.nvim_command("make");
     vim.o.makeprg = previous_makeprg;
+    -- Show errors in Trouble if any, close it on successful build.
+    if #vim.fn.getqflist() > 0 then
+        vim.cmd("Trouble qflist open")
+    else
+        vim.cmd("Trouble qflist close")
+    end
 end)

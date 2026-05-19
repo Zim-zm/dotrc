@@ -73,8 +73,6 @@ vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter" }, {
     end,
 })
 
-vim.opt.completeopt = { "menu", "menuone", "noselect", "preview", "popup" }
-
 -- Highlight on yank, because I'm a bit stupid about what I'm doing.
 vim.api.nvim_create_autocmd('TextYankPost', {
     desc = 'Highlight when yanking text',

@@ -50,6 +50,11 @@ return {
         opts = {
             keymap = { preset = 'default' },
             snippets = { preset = 'luasnip' },
+            completion = {
+                list = { selection = { preselect = true, auto_insert = false } },
+                documentation = { auto_show = true, auto_show_delay_ms = 500 },
+            },
+            signature = { enabled = true },
         },
         opts_extend = { "sources.default" }
     },
