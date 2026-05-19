@@ -20,8 +20,8 @@ vim.keymap.set({ "n", "v" }, "<leader>P", [["*p]])
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
 -- Less confusing page up and page down.
-vim.keymap.set({ "n", "v", "i" }, "<C-d>", '<C-d>zz')
-vim.keymap.set({ "n", "v", "i" }, "<C-u>", '<C-u>zz')
+vim.keymap.set({ "n", "v" }, "<C-d>", '<C-d>zz')
+vim.keymap.set({ "n", "v" }, "<C-u>", '<C-u>zz')
 
 -- Keep cursor centered when jumping between search results.
 vim.keymap.set("n", "n", "nzzzv")
@@ -32,8 +32,8 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
 vim.keymap.set("n", "<leader>m", function()
-    local previous_makeprg = vim.g.makeprg;
-    vim.g.makeprg = "m";
+    local previous_makeprg = vim.o.makeprg;
+    vim.o.makeprg = "m";
     vim.api.nvim_command("make");
-    vim.g.makeprg = previous_makeprg;
+    vim.o.makeprg = previous_makeprg;
 end)

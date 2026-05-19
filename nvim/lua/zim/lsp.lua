@@ -13,7 +13,7 @@ local rustc_sysroot = io.popen('rustc --print sysroot'):read()
 if rustc_sysroot ~= nil then
     rust_config.settings = {
         ["rust-analyzer.settings.source"] =
-            rustc_sysroot .. 'lib/rustlib/rustc-src/rust/compiler/rustc/Cargo.toml'
+            rustc_sysroot .. '/lib/rustlib/rustc-src/rust/compiler/rustc/Cargo.toml'
     }
 end
 vim.lsp.config('rust_analyzer', rust_config)

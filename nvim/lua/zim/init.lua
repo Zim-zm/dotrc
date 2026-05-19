@@ -36,9 +36,6 @@ vim.opt.undofile = true
 -- faster CursorHold events (snappier diagnostics/git signs).
 vim.opt.updatetime = 250
 
--- full 24-bit color.
-vim.opt.termguicolors = true
-
 -- always have at least 8 lines above or below the cursor.
 vim.opt.scrolloff = 8
 
@@ -76,11 +73,7 @@ vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter" }, {
     end,
 })
 
--- leader keys, have to be set before loading plugins.
-vim.g.mapleader = " "
-vim.g.localleader = " "
-
-vim.g.completeopt = { "menu", "menuone", "noselect", "preview", "popup" }
+vim.opt.completeopt = { "menu", "menuone", "noselect", "preview", "popup" }
 
 -- Highlight on yank, because I'm a bit stupid about what I'm doing.
 vim.api.nvim_create_autocmd('TextYankPost', {
