@@ -12,6 +12,7 @@ return {
             { '<leader>fx', function() require('fzf-lua').files() end },
             { '<C-p>',      function() require('fzf-lua').git_files() end },
             { '<leader>b',  function() require('fzf-lua').buffers() end },
+            { '<leader>fg', function() require('fzf-lua').live_grep() end, desc = "Live grep" },
         }
     },
 

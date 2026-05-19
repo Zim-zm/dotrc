@@ -20,12 +20,24 @@ vim.opt.expandtab = true
 -- no line wrap.
 vim.opt.wrap = false
 
+-- case-insensitive search (smartcase: becomes case-sensitive if uppercase is used).
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
 -- highlight search.
 vim.opt.hlsearch = true
 -- incremental search.
 vim.opt.incsearch = true
 -- Preview substitutions.
 vim.opt.inccommand = 'split'
+
+-- persistent undo across sessions.
+vim.opt.undofile = true
+
+-- faster CursorHold events (snappier diagnostics/git signs).
+vim.opt.updatetime = 250
+
+-- full 24-bit color.
+vim.opt.termguicolors = true
 
 -- always have at least 8 lines above or below the cursor.
 vim.opt.scrolloff = 8
