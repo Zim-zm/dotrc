@@ -64,17 +64,13 @@ vim.api.nvim_create_autocmd("LspAttach", {
             end,
         })
 
-        -- LSP keymaps
+        -- LSP keymaps. Neovim 0.11 already sets defaults: K (hover), grn
+        -- (rename), gra (code_action), grr (references), gri (implementation),
+        -- gO (document_symbol), <C-s> in insert (signature_help).
         local opts = { buffer = args.buf }
-        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
         vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
         vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
         vim.keymap.set('n', 'go', vim.lsp.buf.type_definition, opts)
-        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
-        vim.keymap.set('n', 'gs', vim.lsp.buf.signature_help, opts)
-        vim.keymap.set('n', '<F2>', vim.lsp.buf.rename, opts)
         vim.keymap.set('n', '<F3>', function() vim.lsp.buf.format({ async = true }) end, opts)
-        vim.keymap.set('n', '<F4>', vim.lsp.buf.code_action, opts)
     end
 })

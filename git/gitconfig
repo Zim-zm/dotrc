@@ -15,6 +15,7 @@
 
 [user]
     name = Stephane Zimmermann
+    email = stephane.zimmermann@gmail.com
 
 [color]
     ui = auto
