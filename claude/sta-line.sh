@@ -1,10 +1,12 @@
 #!/bin/bash
-# Claude Code statusline: model name, cwd + git branch (clean/dirty colored),
-# context-window usage, and 5-hour/weekly rate-limit usage/reset.
+# Claude Code statusline: model name and effort level, cwd + git branch
+# (clean/dirty colored), context-window usage, and 5-hour/weekly rate-limit
+# usage/reset.
 
 input=$(cat)
 
 model=$(printf '%s' "$input" | jq -r '.model.display_name')
+effort=$(printf '%s' "$input" | jq -r '.effort.level // empty')
 cwd=$(printf '%s' "$input" | jq -r '.workspace.current_dir')
 ctx_pct=$(printf '%s' "$input" | jq -r '.context_window.used_percentage // empty')
 five_pct=$(printf '%s' "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
@@ -33,7 +35,11 @@ if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 
 fi
 
 parts=()
-parts+=("${BBlu}${model}${RCol}")
+if [ -n "$effort" ]; then
+    parts+=("${BBlu}${model} (${effort})${RCol}")
+else
+    parts+=("${BBlu}${model}${RCol}")
+fi
 parts+=("${cwd}${git_info}")
 
 if [ -n "$ctx_pct" ]; then
