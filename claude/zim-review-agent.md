@@ -20,7 +20,8 @@ commit text and decided these rules for you:
   at the end, and the 100-character cap;
 - the `Assisted-by:` and `Co-Authored-By:` trailers;
 - the blank line after the subject, and the 80-character body lines;
-- a `test:` or a `doc:` commit that changes a production line;
+- a `test:` commit that changes a production line, and a `doc:` commit that
+  changes a production line of code;
 - `production_lines` above 100 without an `Atomic:` or a `Mechanical:` line.
 
 Report one of these rules **only** when a `mechanical:` line states it, and copy

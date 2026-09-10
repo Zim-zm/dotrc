@@ -36,7 +36,7 @@ it again after a pull.
 
 | file | role |
 | --- | --- |
-| `zim-paths.sh` | the paths that are not production code, the state directory, the per-worktree key |
+| `zim-paths.sh` | the paths that are not production code, the comment syntax of each extension, the state directory, the per-worktree key |
 | `zim-rules.sh` | every rule a script can decide, the type table, the pure-refactor test |
 | `zim-commit-guard.sh` | `PreToolUse` on `Bash`: judges a commit message before git writes it |
 | `zim-review-gate.sh` | decides whether a review is due, prints what to review, and holds the state modes |
@@ -61,7 +61,8 @@ it again after a pull.
    characters or fewer. A trailer and a line without a space are exempt.
 5. The message carries exactly one `Assisted-by:` trailer and no
    `Co-Authored-By:`.
-6. A `test:` or a `doc:` commit changes no production line. Otherwise it is a
+6. A `test:` commit changes no production line. A `doc:` commit changes no
+   production line of code, so it may change a comment. Otherwise it is a
    `feat:` or a `fix:`.
 7. Over 100 production lines need an `Atomic:` or a `Mechanical:` line, which
    says why the commit cannot be split.
@@ -84,6 +85,13 @@ The mechanism is general. These choices are not:
 - `ZIM_CONVENTIONAL_SINCE`. Set it to the day you start.
 - `ZIM_NON_PRODUCTION` in `zim-paths.sh`. It is shaped for a repository with
   `tests/`, `oracle/` and `doc/` directories.
+- `zim_comment_markers` in `zim-paths.sh`. It names the comment syntax of each
+  extension. An extension it does not name keeps every changed line, so a
+  `doc:` commit that touches such a file stays refused. The test reads one line
+  at a time, so an interior line of a block comment that carries no delimiter
+  counts as code, and the deletion of the two delimiters around live code counts
+  as a comment change. The style review reads the whole diff and catches the
+  second case.
 - `skills/zim-code/SKILL.md`. It holds the written rules, including a
   merge-request section for GitLab.
 - The models: Sonnet 5 for the style review, Opus 5 for the audit. Do not use

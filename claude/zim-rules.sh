@@ -19,7 +19,7 @@ fix       a wrong result, a crash or a wrong message, in behaviour already claim
 refactor  a code change with no change of any result: a rename, a move, an extraction, an inlining, a dead-code removal
 perf      a speed or a memory gain with no change of any result
 test      a test, a run.config or an oracle; it changes no production line
-doc       documentation only; it changes no production line
+doc       documentation only: a document, or a comment in code; it changes no code line
 style     formatting only: a formatter run, whitespace, a line wrap; it renames nothing
 ci        the pipeline: .gitlab-ci.yml, the runner images, the release scripts
 build     the build and the dependencies: dune, opam, the Makefile, build(deps): for a bump
@@ -62,10 +62,12 @@ zim_is_pure_refactor() {
 
 zim_message_violations() {
   # $1: the full commit message, $2: the production line count, $3: the author
-  # date as YYYY-MM-DD, empty for a commit that does not exist yet.
+  # date as YYYY-MM-DD, empty for a commit that does not exist yet, $4: the
+  # production lines that hold code, which defaults to $2.
   local message="$1"
   local production_lines="${2:-0}"
   local author_date="${3:-}"
+  local code_lines="${4:-$production_lines}"
   local subject prefix assisted types_re length second conventional=true
 
   subject=$(printf '%s\n' "$message" | head -1)
@@ -116,12 +118,14 @@ zim_message_violations() {
   [ "$length" -gt "$ZIM_SUBJECT_MAX" ] &&
     echo "The subject holds $length characters, more than $ZIM_SUBJECT_MAX."
 
-  if [ "$production_lines" -gt 0 ]; then
-    case "$prefix" in
-      test|doc)
-        echo "A $prefix: commit changes $production_lines production lines. Use feat: or fix:, or move the production change to its own commit." ;;
-    esac
-  fi
+  case "$prefix" in
+    test)
+      [ "$production_lines" -gt 0 ] &&
+        echo "A test: commit changes $production_lines production lines. Use feat: or fix:, or move the production change to its own commit." ;;
+    doc)
+      [ "$code_lines" -gt 0 ] &&
+        echo "A doc: commit changes $code_lines production code lines. Use feat: or fix:, or move the production change to its own commit." ;;
+  esac
 
   second=$(printf '%s\n' "$message" | sed -n 2p)
   [ -n "$second" ] &&

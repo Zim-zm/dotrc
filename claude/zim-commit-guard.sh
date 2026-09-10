@@ -77,6 +77,7 @@ subject=$(printf '%s' "$message" | head -1)
 diff_range=(--cached)
 [ "$amend" = true ] && diff_range+=(HEAD^)
 lines=$(zim_production_lines "$cwd" "${diff_range[@]}")
+code_lines=$(zim_production_code_lines "$cwd" "${diff_range[@]}")
 
 violations=()
 
@@ -91,7 +92,7 @@ author_date=""
 
 while IFS= read -r violation; do
   violations+=("$violation")
-done < <(zim_message_violations "$message" "${lines:-0}" "$author_date")
+done < <(zim_message_violations "$message" "${lines:-0}" "$author_date" "${code_lines:-0}")
 
 if [ ${#violations[@]} -gt 0 ]; then
   {

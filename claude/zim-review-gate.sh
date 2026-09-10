@@ -128,9 +128,10 @@ payload=$(
   git -C "$cwd" log --reverse --no-merges --format='%H%x09%s' "$base..HEAD" |
     while IFS=$'\t' read -r sha subject; do
       lines=$(zim_production_lines "$cwd" "$sha^!")
+      code_lines=$(zim_production_code_lines "$cwd" "$sha^!")
       violations=$(zim_message_violations \
         "$(git -C "$cwd" log -1 --format='%B' "$sha")" "$lines" \
-        "$(git -C "$cwd" log -1 --format='%as' "$sha")")
+        "$(git -C "$cwd" log -1 --format='%as' "$sha")" "$code_lines")
       echo "$sha  production_lines=$lines  $subject"
       if [ -z "$violations" ]; then
         echo "  mechanical: OK"
