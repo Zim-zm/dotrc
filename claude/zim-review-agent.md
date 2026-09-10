@@ -76,8 +76,9 @@ Each rule below is decidable from the diff.
 
 Answer with JSON and nothing else.
 
-- No finding: run `<the gate script> <the worktree of the header> false
-  --record-pass`, then answer `{"ok": true}`. The record tells a later deep audit
+- No finding: record nothing until you have judged every commit of the list.
+  Then run `<the gate script> <the worktree of the header> false
+  --record-pass`, and answer `{"ok": true}`. The record tells a later deep audit
   that the types of these commits are trustworthy.
 - One finding or more: `{"ok": false, "reason": "<the findings>"}`
 
