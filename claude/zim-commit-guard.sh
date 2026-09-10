@@ -60,7 +60,8 @@ message=$(printf '%s' "$command" | perl -0777 -ne '
     exit;
   }
   if ($flags =~ /(?:-F|--file)[= ]\s*(\S+)/ && -f $1) {
-    open my $f, "<", $1 and print <$f>;
+    open(my $f, "<", $1) or exit;
+    print <$f>;
     exit;
   }
   my @m;
