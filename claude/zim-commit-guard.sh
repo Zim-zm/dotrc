@@ -74,11 +74,9 @@ message=$(printf '%s' "$command" | perl -0777 -ne '
 
 subject=$(printf '%s' "$message" | head -1)
 
-if [ "$amend" = true ]; then
-  lines=$(zim_production_lines "$cwd" --cached HEAD^)
-else
-  lines=$(zim_production_lines "$cwd" --cached)
-fi
+diff_range=(--cached)
+[ "$amend" = true ] && diff_range+=(HEAD^)
+lines=$(zim_production_lines "$cwd" "${diff_range[@]}")
 
 violations=()
 
