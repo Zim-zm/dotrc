@@ -52,7 +52,14 @@ Each rule below is decidable from the diff.
   `fix:`. Ask the question, and mark the finding as unverified.
 - The diff addresses one concern. A fix mixed with a refactor is two commits.
 - A rename, a move, an extraction, an inlining, or a dead-code removal stands
-  alone. An extraction moves the code without changing it.
+  alone, and it comes before the change that needs it. An extraction moves the
+  code without changing it. Read every `feat:`, every `fix:` and every `perf:`
+  diff for one of those shapes. Result-preserving work that is dead without the
+  change is exempt: a parameter that nothing yet passes, a helper that nothing
+  yet calls. An `Atomic:` or a `Mechanical:` line answers this question, so
+  report only a shape that the line does not cover. Report a split only when you
+  can name the hunks of the refactor, state that they change no result, and
+  state what the commit still does without them.
 - A new comment states what the code cannot state. Apply the deletion test: if
   a reader who reads the code loses nothing, the comment must go. Report each
   comment that fails it.
