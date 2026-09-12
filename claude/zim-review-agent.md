@@ -59,9 +59,10 @@ Each rule below is decidable from the diff.
 - A `feat:` commit that reads as a correction of behaviour already claimed is a
   `fix:`. Ask the question, and mark the finding as unverified.
 - The diff addresses one concern. A fix mixed with a refactor is two commits.
-- A `fix:` commit adds no test. The test that reproduces the defect is a `test:`
-  commit before it, with an oracle that records the wrong output. An oracle that
-  the fix updates to the correct output stays in the `fix:` commit.
+- A `fix:` commit adds no test. When the defect has a test, that test is a
+  `test:` commit before the fix, with an oracle that records the wrong output.
+  An oracle that the fix updates to the correct output stays in the `fix:`
+  commit. A project with no test suite needs no `test:` commit.
 - A rename, a move, an extraction, an inlining, or a dead-code removal stands
   alone, and it comes before the change that needs it. An extraction moves the
   code without changing it. Read every `feat:`, every `fix:` and every `perf:`
