@@ -41,14 +41,15 @@ Each rule below is decidable from the diff.
 
 - The subject states one change. A subject that needs "and" signals two
   concerns.
-- A body sentence gives the reader what the diff cannot. Ask of each prose
-  sentence: can a reader derive it from the diff? Report every sentence that a
-  reader can. Insight is the reason the old behaviour was wrong, the consequence
-  for a user, a caller or a later change, a constraint that forced the shape, an
-  alternative that the author rejected, a measurement, and a fact about the
-  language or the tool that the diff does not show. These are examples, not an
-  allowlist: a sentence in one of them still fails when a reader can derive it.
-  Skip a trailer, an `Atomic:` line, a `Mechanical:` line and a ticket footer.
+- A body gives the reader what the diff cannot. Ask of each clause of each prose
+  sentence: can a reader derive it from the diff? Report every clause that a
+  reader can, and name the clause, not the sentence. Insight is the reason the
+  old behaviour was wrong, the consequence for a user, a caller or a later
+  change, a constraint that forced the shape, an alternative that the author
+  rejected, a measurement, and a fact about the language or the tool that the
+  diff does not show. These are examples, not an allowlist: a clause in one of
+  them still fails when a reader can derive it. Skip a trailer, an `Atomic:`
+  line, a `Mechanical:` line and a ticket footer.
 - The message of a commit that only adds failing tests does not explain the
   error mechanism.
 - The type matches the diff. Judge it against the type table of the payload. A
