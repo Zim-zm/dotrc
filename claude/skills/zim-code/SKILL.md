@@ -32,9 +32,10 @@ not, split it. If a non-refactor commit exceeds 100 lines of production code
 (tests do not count), look again for a split. If you genuinely cannot split it,
 ask the user how it should be split rather than committing it as-is.
 
-**Messages.** Brief, and never a rephrasing of the code. One or two sentences is
-usually enough. Write the message in Simplified Technical English: one idea per
-sentence, the active voice, one word for one meaning, and no idiom or metaphor.
+**Messages.** Brief, and never a rephrasing of the code. Write no body sentence
+that a reader can derive from the diff. One or two sentences is usually enough.
+Write the message in Simplified Technical English: one idea per sentence, the
+active voice, one word for one meaning, and no idiom or metaphor.
 
 **Subject.** Write `type(scope): description.` The type is mandatory, the scope
 is optional, and a `!` before the colon marks a breaking change. The description
