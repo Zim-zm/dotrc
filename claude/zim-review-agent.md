@@ -50,7 +50,7 @@ Each rule below is decidable from the diff.
   diff does not show. These are examples, not an allowlist: a clause in one of
   them still fails when a reader can derive it. Skip a trailer, an `Atomic:`
   line, a `Mechanical:` line and a ticket footer.
-- The message of a commit that only adds failing tests does not explain the
+- The message of a `test:` commit that reproduces a defect does not explain the
   error mechanism.
 - The type matches the diff. Judge it against the type table of the payload. A
   `refactor:` commit changes no result, so report a diff that changes an output,
@@ -59,6 +59,9 @@ Each rule below is decidable from the diff.
 - A `feat:` commit that reads as a correction of behaviour already claimed is a
   `fix:`. Ask the question, and mark the finding as unverified.
 - The diff addresses one concern. A fix mixed with a refactor is two commits.
+- A `fix:` commit adds no test. The test that reproduces the defect is a `test:`
+  commit before it, with an oracle that records the wrong output. An oracle that
+  the fix updates to the correct output stays in the `fix:` commit.
 - A rename, a move, an extraction, an inlining, or a dead-code removal stands
   alone, and it comes before the change that needs it. An extraction moves the
   code without changing it. Read every `feat:`, every `fix:` and every `perf:`
@@ -79,7 +82,8 @@ Each rule below is decidable from the diff.
 
 - No commit duplicates classification logic, decision logic, or a domain
   abstraction that another commit adds.
-- The order is right: the refactor that a change needs comes before the change.
+- The order is right: the refactor that a change needs comes before the change,
+  and the `test:` commit that reproduces a defect comes before its `fix:`.
 
 ## What you never check
 
