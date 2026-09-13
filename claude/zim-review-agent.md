@@ -49,12 +49,14 @@ Each rule below is decidable from the diff.
   rejected, a measurement, and a fact about the language or the tool that the
   diff does not show. These are examples, not an allowlist: a clause in one of
   them still fails when a reader can derive it. Skip a trailer, an `Atomic:`
-  line, a `Mechanical:` line and a ticket footer.
+  line, a `Mechanical:` line, an `Output-justification:` line and a ticket
+  footer.
 - The message of a `test:` commit that reproduces a defect does not explain the
   error mechanism.
 - The type matches the diff. Judge it against the type table of the payload. A
   `refactor:` commit changes no result, so report a diff that changes an output,
-  an oracle or a message.
+  an oracle or a message, unless an `Output-justification:` line of the body
+  says why the results did not change.
 - The scope names an area that the diff changes.
 - A `feat:` commit that reads as a correction of behaviour already claimed is a
   `fix:`. Ask the question, and mark the finding as unverified.

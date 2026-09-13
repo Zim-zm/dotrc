@@ -48,7 +48,9 @@ starts with a lowercase letter and ends with a period. The whole subject holds
 each one covers. Read that file before you choose a type.
 
 **Body.** A blank line separates the subject and the body. Each body line holds
-80 characters or fewer.
+80 characters or fewer. When a result-preserving commit changes an output, an
+oracle or a message, an `Output-justification:` line says why the results are
+the same.
 
 **Ticket.** Name the ticket in a footer. Use `Closes: #9152` when the commit
 closes it, and `Related: #9152` in the other cases.
