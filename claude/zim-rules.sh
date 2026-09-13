@@ -16,7 +16,7 @@ zim_commit_type_table() {
   cat <<'TABLE'
 feat      a capability the project did not have: a feature, an option, a supported construct
 fix       a wrong result, a crash or a wrong message, in behaviour already claimed
-refactor  a code change with no change of any result: a rename, a move, an extraction, an inlining, a dead-code removal
+refactor  a code change with no change of any result, such as a rename, a move, an extraction, an inlining or a dead-code removal
 perf      a speed or a memory gain with no change of any result
 test      a test, a run.config or an oracle; it changes no production line
 doc       documentation only: a document, or a comment in code; it changes no code line

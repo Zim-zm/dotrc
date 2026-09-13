@@ -63,15 +63,16 @@ Each rule below is decidable from the diff.
   `test:` commit before the fix, with an oracle that records the wrong output.
   An oracle that the fix updates to the correct output stays in the `fix:`
   commit. A project with no test suite needs no `test:` commit.
-- A rename, a move, an extraction, an inlining, or a dead-code removal stands
-  alone, and it comes before the change that needs it. An extraction moves the
-  code without changing it. Read every `feat:`, every `fix:` and every `perf:`
-  diff for one of those shapes. Result-preserving work that is dead without the
-  change is exempt: a parameter that nothing yet passes, a helper that nothing
-  yet calls. An `Atomic:` or a `Mechanical:` line answers this question, so
-  report only a shape that the line does not cover. Report a split only when you
-  can name the hunks of the refactor, state that they change no result, and
-  state what the commit still does without them.
+- A change that preserves every result stands alone, and it comes before the
+  change that needs it. It can be a rename, a move, an extraction, an inlining,
+  a dead-code removal, or any other rewrite with the same results. An extraction
+  moves the code without changing it. Read every `feat:`, every `fix:` and every
+  `perf:` diff for such a change. Result-preserving work that is dead without
+  the change is exempt: a parameter that nothing yet passes, a helper that
+  nothing yet calls. An `Atomic:` or a `Mechanical:` line answers this question,
+  so report only a change that the line does not cover. Report a split only
+  when you can name the hunks of the refactor, state that they change no
+  result, and state what the commit still does without them.
 - A new comment states what the code cannot state. Apply the deletion test: if
   a reader who reads the code loses nothing, the comment must go. Report each
   comment that fails it.
