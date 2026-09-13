@@ -1,5 +1,5 @@
-# Pathspecs that exclude non-production files from a diff, and the state
-# directory of the review system.
+# Pathspecs that exclude non-production files from a diff, the state directory
+# of the review system, and the base that a review covers.
 # Sourced by zim-review-gate.sh, zim-commit-guard.sh and zim-audit-guard.sh:
 # one source of truth.
 
@@ -106,4 +106,44 @@ zim_production_code_lines() {
     total=$((total + count))
   done < <(git -C "$dir" diff --name-only "$@" -- . "${ZIM_NON_PRODUCTION[@]}" 2>/dev/null)
   printf '%s' "$total"
+}
+
+ZIM_BASE_CANDIDATES=(origin/main origin/master origin/develop)
+
+zim_review_base() {
+  # $1: a directory inside a worktree. Prints the base to review against, a tab,
+  # then where it comes from.
+  local dir="$1" branch configured ref pool best best_count count default_ref
+  local count_label
+  branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+  configured=$(git -C "$dir" config "zim.$branch.reviewBase" 2>/dev/null) &&
+    { printf '%s\t%s' "$configured" "the zim.$branch.reviewBase config"; return; }
+  configured=$(git -C "$dir" config zim.reviewBase 2>/dev/null) &&
+    { printf '%s\t%s' "$configured" "the zim.reviewBase config"; return; }
+
+  default_ref=$(git -C "$dir" rev-parse --abbrev-ref origin/HEAD 2>/dev/null)
+  [ "$default_ref" = "origin/HEAD" ] && default_ref=""
+
+  best=""; best_count=""
+  pool=$( { git -C "$dir" for-each-ref --format='%(refname:short)' refs/heads
+            [ -n "$default_ref" ] && printf '%s\n' "$default_ref"
+            printf '%s\n' "${ZIM_BASE_CANDIDATES[@]}"; } | sort -u)
+  while IFS= read -r ref; do
+    [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
+    git -C "$dir" rev-parse --verify --quiet "$ref" >/dev/null || continue
+    git -C "$dir" merge-base --is-ancestor "$ref" HEAD 2>/dev/null || continue
+    count=$(git -C "$dir" rev-list --count --no-merges "$ref..HEAD" 2>/dev/null)
+    [ "${count:-0}" -gt 0 ] || continue
+    if [ -z "$best_count" ] || [ "$count" -lt "$best_count" ]; then
+      best="$ref"; best_count="$count"
+    fi
+  done <<< "$pool"
+
+  if [ -n "$best" ]; then
+    [ "$best_count" -eq 1 ] && count_label=commit || count_label=commits
+    printf '%s\t%s' "$best" "the nearest ancestor, $best_count $count_label below HEAD"
+    return
+  fi
+  printf '%s\t%s' "origin/master" "the last-resort default"
 }

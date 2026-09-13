@@ -36,7 +36,7 @@ it again after a pull.
 
 | file | role |
 | --- | --- |
-| `zim-paths.sh` | the paths that are not production code, the comment syntax of each extension, the state directory, the per-worktree key |
+| `zim-paths.sh` | the paths that are not production code, the comment syntax of each extension, the review base, the state directory, the per-worktree key |
 | `zim-rules.sh` | every rule a script can decide, the type table, the pure-refactor test |
 | `zim-commit-guard.sh` | `PreToolUse` on `Bash`: judges a commit message before git writes it |
 | `zim-review-gate.sh` | decides whether a review is due, prints what to review, and holds the state modes |
@@ -101,13 +101,31 @@ The mechanism is general. These choices are not:
 - The models: Sonnet 5 for the style review, Opus 5 for the audit. Do not use
   Haiku for a review: 384 recorded runs on Haiku reported a finding zero times.
 
-## Stacked branches
+## The review base
 
-The review covers `<base>..HEAD`, and the base is `origin/master` by default. A
-branch stacked on another one reviews the whole stack until you say otherwise:
+The review covers `<base>..HEAD`. The gate takes the first of these that answers:
+
+1. `zim.<branch>.reviewBase`. A branch lives in at most one worktree, so this
+   key is per worktree in practice.
+2. `zim.reviewBase`. Every worktree of a repository shares this one, because it
+   lives in `.git/config`.
+3. the nearest ancestor of HEAD among the local branches, `origin/HEAD`,
+   `origin/main`, `origin/master` and `origin/develop`. A stacked branch needs
+   no config: the branch below it is the nearest ancestor.
+4. `origin/master`.
+
+Step 3 cannot tell the branch below from a stale local branch left in your
+history. The gate prints its choice and the reason, so a wrong base is visible
+in the first lines of the payload:
 
 ```
-git -C <worktree> config zim.reviewBase <the branch below>
+base: rust/coerce-unsized-dyn (the nearest ancestor, 3 commits below HEAD)
+```
+
+Override it for one branch:
+
+```
+git -C <worktree> config zim.<branch>.reviewBase <the branch below>
 ```
 
 ## The state directory

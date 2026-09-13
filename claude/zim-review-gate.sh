@@ -41,7 +41,7 @@ git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 
 toplevel=$(git -C "$cwd" rev-parse --show-toplevel)
 branch=$(git -C "$cwd" rev-parse --abbrev-ref HEAD)
-base=$(git -C "$cwd" config zim.reviewBase || echo origin/master)
+IFS=$'\t' read -r base base_source <<< "$(zim_review_base "$cwd")"
 
 git -C "$cwd" rev-parse --verify --quiet "$base" >/dev/null ||
   skip "the base $base does not exist"
@@ -112,7 +112,7 @@ payload=$(
   echo "REVIEW"
   echo "worktree: $toplevel"
   echo "branch: $branch"
-  echo "base: $base"
+  echo "base: $base ($base_source)"
   echo "commits: $count"
   echo "diff file: $diff_file"
   echo "diff file lines: $diff_lines"
