@@ -78,6 +78,7 @@ diff_range=(--cached)
 [ "$amend" = true ] && diff_range+=(HEAD^)
 lines=$(zim_production_lines "$cwd" "${diff_range[@]}")
 code_lines=$(zim_production_code_lines "$cwd" "${diff_range[@]}")
+recorded_output=$(zim_recorded_output_files "$cwd" "${diff_range[@]}" | head -1)
 
 violations=()
 
@@ -92,7 +93,8 @@ author_date=""
 
 while IFS= read -r violation; do
   violations+=("$violation")
-done < <(zim_message_violations "$message" "${lines:-0}" "$author_date" "${code_lines:-0}")
+done < <(zim_message_violations "$message" "${lines:-0}" "$author_date" \
+  "${code_lines:-0}" "$recorded_output")
 
 if [ ${#violations[@]} -gt 0 ]; then
   {

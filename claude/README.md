@@ -66,6 +66,8 @@ it again after a pull.
    `feat:` or a `fix:`.
 7. Over 100 production lines need an `Atomic:` or a `Mechanical:` line, which
    says why the commit cannot be split.
+8. A `refactor:`, a `style:` or a `perf:` commit that changes an oracle carries
+   an `Output-justification:` line, which says why the results are the same.
 
 Three escapes: a `wip:` subject needs `WIP=1` in the command and skips every
 other rule; a subject that a tool writes (`Revert "…"`, `fixup!`, `squash!`) is
@@ -85,6 +87,8 @@ The mechanism is general. These choices are not:
 - `ZIM_CONVENTIONAL_SINCE`. Set it to the day you start.
 - `ZIM_NON_PRODUCTION` in `zim-paths.sh`. It is shaped for a repository with
   `tests/`, `oracle/` and `doc/` directories.
+- `ZIM_RECORDED_OUTPUT` in `zim-paths.sh`. It names the paths that record a
+  result: `oracle/`, `*/oracle/*` and `*.oracle`.
 - `zim_comment_markers` in `zim-paths.sh`. It names the comment syntax of each
   extension. An extension it does not name keeps every changed line, so a
   `doc:` commit that touches such a file stays refused. The test reads one line

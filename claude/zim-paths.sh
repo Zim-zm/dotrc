@@ -34,6 +34,19 @@ zim_non_production_files() {
   git -C "$dir" diff --name-only "$@" -- "${ZIM_NON_PRODUCTION_PATHS[@]}" 2>/dev/null
 }
 
+ZIM_RECORDED_OUTPUT=(
+  "oracle/*"
+  "*/oracle/*"
+  "*.oracle"
+)
+
+zim_recorded_output_files() {
+  # $1: git directory, remaining arguments: a diff range or --cached. Prints the
+  # changed files that record a result of the program.
+  local dir="$1"; shift
+  git -C "$dir" diff --name-only "$@" -- "${ZIM_RECORDED_OUTPUT[@]}" 2>/dev/null
+}
+
 zim_production_lines() {
   # $1: git directory, remaining arguments: a diff range or --cached.
   local dir="$1"; shift

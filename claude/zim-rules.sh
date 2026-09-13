@@ -63,11 +63,13 @@ zim_is_pure_refactor() {
 zim_message_violations() {
   # $1: the full commit message, $2: the production line count, $3: the author
   # date as YYYY-MM-DD, empty for a commit that does not exist yet, $4: the
-  # production lines that hold code, which defaults to $2.
+  # production lines that hold code, which defaults to $2, $5: a recorded output
+  # file that the diff changes, empty when the diff changes none.
   local message="$1"
   local production_lines="${2:-0}"
   local author_date="${3:-}"
   local code_lines="${4:-$production_lines}"
+  local recorded_output="${5:-}"
   local subject prefix assisted types_re length second conventional=true
 
   subject=$(printf '%s\n' "$message" | head -1)
@@ -126,6 +128,14 @@ zim_message_violations() {
       [ "$code_lines" -gt 0 ] &&
         echo "A doc: commit changes $code_lines production code lines. Use feat: or fix:, or move the production change to its own commit." ;;
   esac
+
+  if [ -n "$recorded_output" ]; then
+    case "$prefix" in
+      refactor|style|perf)
+        printf '%s\n' "$message" | grep -q '^Output-justification:' ||
+          echo "A $prefix: commit changes $recorded_output and carries no Output-justification: line, which says why the results are the same." ;;
+    esac
+  fi
 
   second=$(printf '%s\n' "$message" | sed -n 2p)
   [ -n "$second" ] &&

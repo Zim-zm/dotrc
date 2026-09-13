@@ -129,9 +129,10 @@ payload=$(
     while IFS=$'\t' read -r sha subject; do
       lines=$(zim_production_lines "$cwd" "$sha^!")
       code_lines=$(zim_production_code_lines "$cwd" "$sha^!")
+      recorded_output=$(zim_recorded_output_files "$cwd" "$sha^!" | head -1)
       violations=$(zim_message_violations \
         "$(git -C "$cwd" log -1 --format='%B' "$sha")" "$lines" \
-        "$(git -C "$cwd" log -1 --format='%as' "$sha")" "$code_lines")
+        "$(git -C "$cwd" log -1 --format='%as' "$sha")" "$code_lines" "$recorded_output")
       echo "$sha  production_lines=$lines  $subject"
       if [ -z "$violations" ]; then
         echo "  mechanical: OK"

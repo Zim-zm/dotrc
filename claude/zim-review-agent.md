@@ -22,6 +22,8 @@ commit text and decided these rules for you:
 - the blank line after the subject, and the 80-character body lines;
 - a `test:` commit that changes a production line, and a `doc:` commit that
   changes a production line of code;
+- a `refactor:`, a `style:` or a `perf:` commit that changes a recorded output
+  with no `Output-justification:` line;
 - `production_lines` above 100 without an `Atomic:` or a `Mechanical:` line.
 
 Report one of these rules **only** when a `mechanical:` line states it, and copy
@@ -54,9 +56,9 @@ Each rule below is decidable from the diff.
 - The message of a `test:` commit that reproduces a defect does not explain the
   error mechanism.
 - The type matches the diff. Judge it against the type table of the payload. A
-  `refactor:` commit changes no result, so report a diff that changes an output,
-  an oracle or a message, unless an `Output-justification:` line of the body
-  says why the results did not change.
+  `refactor:` commit changes no result, so report a diff that changes an output
+  or a message outside an oracle file. The gate decides the oracle case, with
+  the `Output-justification:` line.
 - The scope names an area that the diff changes.
 - A `feat:` commit that reads as a correction of behaviour already claimed is a
   `fix:`. Ask the question, and mark the finding as unverified.
