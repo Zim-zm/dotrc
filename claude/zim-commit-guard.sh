@@ -69,7 +69,11 @@ message=$(printf '%s' "$command" | perl -0777 -ne '
   while ($flags =~ /-m\s+\x27([^\x27]*)\x27/g)  { push @m, $1 }
   print join("\n\n", @m);
 ')
-[ -z "$message" ] && [ "$amend" = true ] &&
+names_message=false
+printf '%s' "$command" |
+  grep -qE '(^|[[:space:]])(-m|--message|-F|--file)([[:space:]]|=)' && names_message=true
+
+[ -z "$message" ] && [ "$amend" = true ] && [ "$names_message" = false ] &&
   message=$(git -C "$cwd" log -1 --format=%B 2>/dev/null)
 
 subject=$(printf '%s' "$message" | head -1)
@@ -107,7 +111,7 @@ fi
 
 notes=()
 [ -z "$subject" ] &&
-  notes+=("The guard could not read the message, so it checked the size only.")
+  notes+=("The guard could not read the message, so it checked the size only. It runs before the command, so a message file that the same command writes does not exist yet. Write that file in an earlier call.")
 printf '%s' "$subject" | grep -q ' and ' &&
   notes+=("The subject contains \"and\". Check that the commit holds one concern.")
 comments=$(git -C "$cwd" diff --cached -U0 -- . "${ZIM_NON_PRODUCTION[@]}" |
