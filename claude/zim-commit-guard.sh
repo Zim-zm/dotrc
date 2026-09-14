@@ -14,25 +14,48 @@ cwd=$(printf '%s' "$input" | jq -r '.cwd // ""')
 # The command position matters: prose inside a heredoc mentions a command
 # without running it.
 printf '%s' "$command" |
-  grep -qE '(^|[;&|(]|&&|\|\|)[[:space:]]*(WIP=1[[:space:]]+)?git[[:space:]]+(-[^ ]+[[:space:]]+)*commit([[:space:]]|$)' ||
+  grep -qE '(^|[;&|(]|&&|\|\|)[[:space:]]*(WIP=1[[:space:]]+)?git[[:space:]]+(((-C|-c|--git-dir|--work-tree|--namespace|--exec-path)[= ][[:space:]]*[^ ]+|-[^ ]+)[[:space:]]+)*commit([[:space:]]|$)' ||
   exit 0
 
-[ "$(git -C "$cwd" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ] || exit 0
+# The hook runs in the session directory, and the command can name another
+# repository, with git -C or with a leading cd.
+named=$(printf '%s' "$command" | perl -0777 -ne '
+  exit unless /(?:^|[;&|(])\s*(?:WIP=1\s+)?git\s+((?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace|--exec-path)[= ]\s*\S+|-\S+)\s+)*)commit\b/s;
+  my ($path) = $1 =~ /(?:^|\s)-C[= ]\s*(\S+)/;
+  print $path if defined $path;
+')
+[ -n "$named" ] ||
+  named=$(printf '%s' "$command" |
+    perl -0777 -ne 'print $1 if /^\s*cd\s+(\S+)\s*(?:&&|;)/')
 
-case "$cwd" in /tmp/*|*/scratchpad/*) exit 0 ;; esac
+target="$cwd"
+if [ -n "$named" ]; then
+  case "$named" in /*) named_path="$named" ;; *) named_path="$cwd/$named" ;; esac
+  if [ -d "$named_path" ]; then
+    target="$named_path"
+  else
+    jq -n --arg c "The guard judged nothing. The command names the repository $named, and that path does not resolve here, so the guard cannot read its index. Name a literal path to get the mechanical checks." \
+      '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $c}}'
+    exit 0
+  fi
+fi
 
-git_dir=$(git -C "$cwd" rev-parse --git-dir 2>/dev/null)
+[ "$(git -C "$target" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ] || exit 0
+
+case "$target" in /tmp/*|*/scratchpad/*) exit 0 ;; esac
+
+git_dir=$(git -C "$target" rev-parse --git-dir 2>/dev/null)
 [ -f "$git_dir/MERGE_HEAD" ] && exit 0
 
 amend=false
 printf '%s' "$command" | grep -qE '\-\-amend' && amend=true
 
-[ "$amend" = true ] && [ "$(git -C "$cwd" rev-list --no-walk --count --merges HEAD 2>/dev/null)" = "1" ] && exit 0
+[ "$amend" = true ] && [ "$(git -C "$target" rev-list --no-walk --count --merges HEAD 2>/dev/null)" = "1" ] && exit 0
 
 message=$(printf '%s' "$command" | perl -0777 -ne '
   # Read the flags of the commit invocation only, not another command that
   # shares the line and not the body of an unrelated heredoc.
-  exit unless /(?:^|[;&|(])\s*(?:WIP=1\s+)?git\s+(?:-\S+\s+)*commit\b(.*)/s;
+  exit unless /(?:^|[;&|(])\s*(?:WIP=1\s+)?git\s+(?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace|--exec-path)[= ]\s*\S+|-\S+)\s+)*commit\b(.*)/s;
   my $rest = $1;
 
   # Keep the flags up to the first separator that a quote does not protect, so
@@ -74,15 +97,15 @@ printf '%s' "$command" |
   grep -qE '(^|[[:space:]])(-m|--message|-F|--file)([[:space:]]|=)' && names_message=true
 
 [ -z "$message" ] && [ "$amend" = true ] && [ "$names_message" = false ] &&
-  message=$(git -C "$cwd" log -1 --format=%B 2>/dev/null)
+  message=$(git -C "$target" log -1 --format=%B 2>/dev/null)
 
 subject=$(printf '%s' "$message" | head -1)
 
 diff_range=(--cached)
 [ "$amend" = true ] && diff_range+=(HEAD^)
-lines=$(zim_production_lines "$cwd" "${diff_range[@]}")
-code_lines=$(zim_production_code_lines "$cwd" "${diff_range[@]}")
-recorded_output=$(zim_recorded_output_files "$cwd" "${diff_range[@]}" | head -1)
+lines=$(zim_production_lines "$target" "${diff_range[@]}")
+code_lines=$(zim_production_code_lines "$target" "${diff_range[@]}")
+recorded_output=$(zim_recorded_output_files "$target" "${diff_range[@]}" | head -1)
 
 violations=()
 
@@ -93,7 +116,7 @@ case "$subject" in
 esac
 
 author_date=""
-[ "$amend" = true ] && author_date=$(git -C "$cwd" log -1 --format=%as 2>/dev/null)
+[ "$amend" = true ] && author_date=$(git -C "$target" log -1 --format=%as 2>/dev/null)
 
 while IFS= read -r violation; do
   violations+=("$violation")
@@ -114,7 +137,7 @@ notes=()
   notes+=("The guard could not read the message, so it checked the size only. It runs before the command, so a message file that the same command writes does not exist yet. Write that file in an earlier call.")
 printf '%s' "$subject" | grep -q ' and ' &&
   notes+=("The subject contains \"and\". Check that the commit holds one concern.")
-comments=$(git -C "$cwd" diff --cached -U0 -- . "${ZIM_NON_PRODUCTION[@]}" |
+comments=$(git -C "$target" diff --cached -U0 -- . "${ZIM_NON_PRODUCTION[@]}" |
   grep -cE '^\+\s*(//|\(\*|#|\*)' || true)
 [ "${comments:-0}" -gt 0 ] &&
   notes+=("The diff adds $comments comment lines. Apply the deletion test to each one: a comment that a code reader does not need must go.")
