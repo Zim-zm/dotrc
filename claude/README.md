@@ -32,6 +32,10 @@ It needs `bash`, `git`, `jq`, `perl`, `awk` and `sha1sum`. It links
 after copying it to `settings.json.zim-backup`. Every step is idempotent, so run
 it again after a pull.
 
+`--copy` copies the directory instead of linking it. Use it when the setup lives
+in a worktree: a link into a worktree breaks when that worktree goes away, and
+the installer warns you when it makes one.
+
 ## The files
 
 | file | role |

@@ -4,13 +4,17 @@
 #
 #   ./install.sh                 the guards, the review, the two skills
 #   ./install.sh --with-statusline   also the status line
+#   ./install.sh --copy              copy the setup instead of linking it, for a
+#                                    source that lives in a worktree
 
 set -eu
 
 with_statusline=false
+copy=false
 for arg in "$@"; do
   case "$arg" in
     --with-statusline) with_statusline=true ;;
+    --copy) copy=true ;;
     *) echo "$arg is not an option of this installer." >&2; exit 1 ;;
   esac
 done
@@ -27,11 +31,25 @@ for tool in git jq perl awk sha1sum; do
 done
 
 mkdir -p "$claude_dir/skills"
-ln -sfn "$here" "$claude_dir/zim"
-for skill in zim-code zim-review zim-audit; do
-  ln -sfn "$here/skills/$skill" "$claude_dir/skills/$skill"
-done
-echo "linked $claude_dir/zim and the three skills"
+if [ "$copy" = true ]; then
+  rm -rf "$claude_dir/zim"
+  cp -r "$here" "$claude_dir/zim"
+  for skill in zim-code zim-review zim-audit; do
+    rm -rf "$claude_dir/skills/$skill"
+    cp -r "$here/skills/$skill" "$claude_dir/skills/$skill"
+  done
+  echo "copied $here into $claude_dir/zim, and the three skills"
+else
+  ln -sfn "$here" "$claude_dir/zim"
+  for skill in zim-code zim-review zim-audit; do
+    ln -sfn "$here/skills/$skill" "$claude_dir/skills/$skill"
+  done
+  echo "linked $claude_dir/zim and the three skills"
+  if [ "$(git -C "$here" worktree list 2>/dev/null | wc -l)" -gt 1 ]; then
+    echo "warning: $claude_dir/zim points into one worktree of a repository that has several."
+    echo "         Remove that worktree and every hook breaks. Run again with --copy."
+  fi
+fi
 
 [ -f "$settings" ] || echo '{}' > "$settings"
 cp "$settings" "$settings.zim-backup"
