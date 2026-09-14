@@ -7,6 +7,14 @@
 
 set -eu
 
+with_statusline=false
+for arg in "$@"; do
+  case "$arg" in
+    --with-statusline) with_statusline=true ;;
+    *) echo "$arg is not an option of this installer." >&2; exit 1 ;;
+  esac
+done
+
 here=$(cd "$(dirname "$0")" && pwd)
 claude_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 settings="$claude_dir/settings.json"
@@ -56,7 +64,7 @@ edit '.permissions.allow //= []
       | unique)'
 echo "allowed the gate and the state directory"
 
-if [ "${1:-}" = "--with-statusline" ]; then
+if [ "$with_statusline" = true ]; then
   edit '.statusLine = {type: "command", command: "~/.claude/zim/sta-line.sh"}'
   echo "installed the status line"
 fi
