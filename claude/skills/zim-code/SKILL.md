@@ -45,6 +45,9 @@ that a reader can derive from the diff. One or two sentences is usually enough.
 - the active voice, and the sentence names the agent of the action;
 - a simple tense, and the present where it fits;
 - one word for one meaning, and the same word for the same thing;
+- the short common word, not the long one: "use", not "utilize"; "need", not
+  "require"; "before", not "prior to"; "about", not "approximately"; "start",
+  not "commence"; "help", not "assist"; "but", not "however"; "so", not "thus";
 - no idiom, no slang, no metaphor;
 - no noun made from a verb: write "the guard reads the message", not "the guard
   does a read of the message";
