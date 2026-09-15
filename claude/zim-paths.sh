@@ -114,7 +114,7 @@ zim_review_base() {
   # $1: a directory inside a worktree. Prints the base to review against, a tab,
   # then where it comes from.
   local dir="$1" branch configured ref pool best best_count count default_ref
-  local count_label
+  local count_label integration
   branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
 
   configured=$(git -C "$dir" config "zim.$branch.reviewBase" 2>/dev/null) &&
@@ -125,13 +125,26 @@ zim_review_base() {
   default_ref=$(git -C "$dir" rev-parse --abbrev-ref origin/HEAD 2>/dev/null)
   [ "$default_ref" = "origin/HEAD" ] && default_ref=""
 
-  best=""; best_count=""
-  pool=$( { git -C "$dir" for-each-ref --format='%(refname:short)' refs/heads
-            [ -n "$default_ref" ] && printf '%s\n' "$default_ref"
-            printf '%s\n' "${ZIM_BASE_CANDIDATES[@]}"; } | sort -u)
+  # An integration branch moves on its own, so it is no longer an ancestor of
+  # HEAD. A shared merge-base keeps it a candidate, and "$ref..HEAD" gives the
+  # commits above that merge-base.
+  integration=$( { [ -n "$default_ref" ] && printf '%s\n' "$default_ref"
+                   printf '%s\n' "${ZIM_BASE_CANDIDATES[@]}"; } | awk '!seen[$0]++')
   while IFS= read -r ref; do
     [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
     git -C "$dir" rev-parse --verify --quiet "$ref" >/dev/null || continue
+    git -C "$dir" merge-base "$ref" HEAD >/dev/null 2>&1 || continue
+    count=$(git -C "$dir" rev-list --count --no-merges "$ref..HEAD" 2>/dev/null)
+    [ "${count:-0}" -gt 0 ] || continue
+    [ "$count" -eq 1 ] && count_label=commit || count_label=commits
+    printf '%s\t%s' "$ref" "the integration branch, $count $count_label below HEAD"
+    return
+  done <<< "$integration"
+
+  best=""; best_count=""
+  pool=$(git -C "$dir" for-each-ref --format='%(refname:short)' refs/heads)
+  while IFS= read -r ref; do
+    [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
     git -C "$dir" merge-base --is-ancestor "$ref" HEAD 2>/dev/null || continue
     count=$(git -C "$dir" rev-list --count --no-merges "$ref..HEAD" 2>/dev/null)
     [ "${count:-0}" -gt 0 ] || continue
