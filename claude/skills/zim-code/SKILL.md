@@ -68,8 +68,21 @@ each one covers. Read that file before you choose a type.
 oracle or a message, an `Output-justification:` line says why the results are
 the same.
 
-**Ticket.** Name the ticket in a footer. Use `Closes: #9152` when the commit
-closes it, and `Related: #9152` in the other cases.
+**Footers.** A footer opens with a capitalised word and a colon, and it sits at
+the end of the message. It escapes the sentence and the line rules, so it can
+run long.
+
+- `Assisted-by:` — always, exactly one, with the assistant your harness names.
+- `Atomic:` — over 100 production lines, and the commit holds one concern.
+- `Mechanical:` — over 100 production lines, and the diff is a rename, a move or
+  a sweep. A `feat:`, a `fix:` or a `perf:` commit never carries it: the sweep
+  is its own `refactor:` commit before it.
+- `Output-justification:` — a `refactor:`, a `style:` or a `perf:` commit
+  changes an oracle, an output or a message. It says why the results are the
+  same.
+- `Closes: #9152` — the commit closes the ticket.
+- `Related: #9152` — the ticket in every other case.
+- Never `Co-Authored-By:`.
 
 ## Merge requests
 
