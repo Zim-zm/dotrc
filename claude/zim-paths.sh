@@ -109,12 +109,13 @@ zim_production_code_lines() {
 }
 
 ZIM_BASE_CANDIDATES=(origin/main origin/master origin/develop)
+ZIM_BASE_WALK_MAX=1000
 
 zim_review_base() {
   # $1: a directory inside a worktree. Prints the base to review against, a tab,
   # then where it comes from.
-  local dir="$1" branch configured ref pool best best_count count default_ref
-  local count_label integration
+  local dir="$1" branch configured ref count default_ref count_label
+  local integration best best_count limit nearest
   branch=$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)
 
   configured=$(git -C "$dir" config "zim.$branch.reviewBase" 2>/dev/null) &&
@@ -126,36 +127,45 @@ zim_review_base() {
   [ "$default_ref" = "origin/HEAD" ] && default_ref=""
 
   # An integration branch moves on its own, so it is no longer an ancestor of
-  # HEAD. A shared merge-base keeps it a candidate, and "$ref..HEAD" gives the
-  # commits above that merge-base.
+  # HEAD. A shared merge-base keeps it a candidate.
   integration=$( { [ -n "$default_ref" ] && printf '%s\n' "$default_ref"
                    printf '%s\n' "${ZIM_BASE_CANDIDATES[@]}"; } | awk '!seen[$0]++')
+  best=""; best_count=""
   while IFS= read -r ref; do
     [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
     git -C "$dir" rev-parse --verify --quiet "$ref" >/dev/null || continue
     git -C "$dir" merge-base "$ref" HEAD >/dev/null 2>&1 || continue
     count=$(git -C "$dir" rev-list --count --no-merges "$ref..HEAD" 2>/dev/null)
     [ "${count:-0}" -gt 0 ] || continue
-    [ "$count" -eq 1 ] && count_label=commit || count_label=commits
-    printf '%s\t%s' "$ref" "the integration branch, $count $count_label below HEAD"
-    return
+    best="$ref"; best_count="$count"
+    break
   done <<< "$integration"
 
-  best=""; best_count=""
-  pool=$(git -C "$dir" for-each-ref --format='%(refname:short)' refs/heads)
-  while IFS= read -r ref; do
-    [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
-    git -C "$dir" merge-base --is-ancestor "$ref" HEAD 2>/dev/null || continue
-    count=$(git -C "$dir" rev-list --count --no-merges "$ref..HEAD" 2>/dev/null)
-    [ "${count:-0}" -gt 0 ] || continue
-    if [ -z "$best_count" ] || [ "$count" -lt "$best_count" ]; then
-      best="$ref"; best_count="$count"
+  # The branch below a stacked branch sits inside the history of HEAD. The walk
+  # stops at the count of the integration branch, because a tip that is farther
+  # gives a longer review, and because a count for each branch of a large
+  # repository costs minutes.
+  limit=${best_count:-$ZIM_BASE_WALK_MAX}
+  nearest=$(git -C "$dir" log --format='%D' --decorate-refs=refs/heads \
+              -n "$limit" HEAD 2>/dev/null |
+    awk -v self="$branch" 'NR > 1 && $0 != "" {
+      n = split($0, names, ", ")
+      for (i = 1; i <= n; i++)
+        if (names[i] != self && names[i] != "HEAD") { print names[i]; exit }
+    }')
+  if [ -n "$nearest" ]; then
+    count=$(git -C "$dir" rev-list --count --no-merges "$nearest..HEAD" 2>/dev/null)
+    if [ "${count:-0}" -gt 0 ] &&
+       { [ -z "$best_count" ] || [ "$count" -lt "$best_count" ]; }; then
+      [ "$count" -eq 1 ] && count_label=commit || count_label=commits
+      printf '%s\t%s' "$nearest" "the nearest ancestor, $count $count_label below HEAD"
+      return
     fi
-  done <<< "$pool"
+  fi
 
   if [ -n "$best" ]; then
     [ "$best_count" -eq 1 ] && count_label=commit || count_label=commits
-    printf '%s\t%s' "$best" "the nearest ancestor, $best_count $count_label below HEAD"
+    printf '%s\t%s' "$best" "the integration branch, $best_count $count_label below HEAD"
     return
   fi
   printf '%s\t%s' "origin/master" "the last-resort default"

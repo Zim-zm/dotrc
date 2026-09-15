@@ -118,20 +118,21 @@ The review covers `<base>..HEAD`. The gate takes the first of these that answers
    key is per worktree in practice.
 2. `zim.reviewBase`. Every worktree of a repository shares this one, because it
    lives in `.git/config`.
-3. the first integration branch that shares history with HEAD: `origin/HEAD`,
-   then `origin/main`, `origin/master` and `origin/develop`. This step asks for
-   no ancestor test, so a branch that moves after you leave it stays the base.
-4. the nearest ancestor of HEAD among the local branches. This serves a
-   repository that has no remote.
+3. the nearest branch tip inside the history of HEAD, when it is nearer than
+   step 4. A stacked branch needs no key: the branch below it is that tip.
+4. the first integration branch that shares history with HEAD: `origin/HEAD`,
+   then `origin/main`, `origin/master` and `origin/develop`. A merge-base
+   accepts it, so a branch that moves after you leave it stays the base.
 5. `origin/master`.
 
-A stacked branch needs the key of step 1, because step 3 answers first. Step 4
-cannot tell the branch below from a stale local branch left in your history. The
-gate prints its choice and the reason, so a wrong base is visible in the first
-lines of the payload:
+Step 3 walks the history of HEAD and stops at the base of step 4, so a
+repository that holds 500 branches answers in milliseconds. It cannot tell the
+branch below from a stale local branch left in your history. The gate prints its
+choice and the reason, so a wrong base is visible in the first lines of the
+payload:
 
 ```
-base: origin/master (the integration branch, 3 commits below HEAD)
+base: rust/coerce-unsized-dyn (the nearest ancestor, 3 commits below HEAD)
 ```
 
 Override it for one branch:
