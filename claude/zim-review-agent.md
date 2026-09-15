@@ -54,6 +54,10 @@ Each rule below is decidable from the diff.
   them still fails when a reader can derive it. Skip a trailer, an `Atomic:`
   line, a `Mechanical:` line, an `Output-justification:` line and a ticket
   footer.
+- The message reads as Simplified Technical English: the active voice, a simple
+  tense, one word for one meaning, and no `-ing` form used as a noun or an
+  adjective. Quote each word that breaks it. The gate decides the length of a
+  sentence, so report no length.
 - The message of a `test:` commit that reproduces a defect does not explain the
   error mechanism.
 - The type matches the diff. Judge it against the type table of the payload. A
