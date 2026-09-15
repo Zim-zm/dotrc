@@ -23,12 +23,13 @@ naturally produces several changes becomes several commits.
 
 **Green.** Each commit builds and passes its tests on its own.
 
-**Ordering.** For each fix or feature: do the minimal refactoring that change
-needs, commit it, then the fix or feature itself, then move on to the next one.
-Do not batch refactoring across several upcoming changes. For a fix in a project
-that has a test suite, commit the test that reproduces the defect first. Its
-oracle records the wrong output, so the commit stays green, and the fix commit
-changes the oracle.
+**Ordering.** For each fix or feature: commit each refactor the change needs,
+then the fix or feature itself, then move on to the next one. Do not batch
+refactoring across several upcoming changes. For a fix in a project that has a
+test suite, commit the test that reproduces the defect between the last refactor
+and the fix. Nothing else separates the two. Its oracle records the wrong
+output, so the commit stays green, and the fix commit changes the oracle. A
+cleanup that the change makes possible follows the change.
 
 **Before committing, check:** does this diff address exactly one concern? If
 not, split it. If a non-refactor commit exceeds 100 lines of production code

@@ -70,9 +70,10 @@ Each rule below is decidable from the diff.
   `fix:`. Ask the question, and mark the finding as unverified.
 - The diff addresses one concern. A fix mixed with a refactor is two commits.
 - A `fix:` commit adds no test. When the defect has a test, that test is a
-  `test:` commit before the fix, with an oracle that records the wrong output.
-  An oracle that the fix updates to the correct output stays in the `fix:`
-  commit. A project with no test suite needs no `test:` commit.
+  `test:` commit, with an oracle that records the wrong output, and it is the
+  parent of the fix. Report any commit between the two. An oracle that the fix
+  updates to the correct output stays in the `fix:` commit. A project with no
+  test suite needs no `test:` commit.
 - A change that preserves every result stands alone, and it comes before the
   change that needs it. It can be a rename, a move, an extraction, an inlining,
   a dead-code removal, or any other rewrite with the same results. An extraction
@@ -94,8 +95,10 @@ Each rule below is decidable from the diff.
 
 - No commit duplicates classification logic, decision logic, or a domain
   abstraction that another commit adds.
-- The order is right: the refactor that a change needs comes before the change,
-  and the `test:` commit that reproduces a defect comes before its `fix:`.
+- The order is right: every refactor that a change needs comes before the
+  `test:` commit that reproduces the defect, and that `test:` commit is the
+  parent of its `fix:`. A refactor that the change makes possible comes after
+  the change.
 
 ## What you never check
 
