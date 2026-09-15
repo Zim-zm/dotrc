@@ -72,6 +72,9 @@ the installer warns you when it makes one.
    says why the commit cannot be split.
 8. A `refactor:`, a `style:` or a `perf:` commit that changes an oracle carries
    an `Output-justification:` line, which says why the results are the same.
+9. A body sentence holds 25 words or fewer, the ASD-STE100 limit for a
+   descriptive sentence. A block that opens with a `Word:` prefix is exempt, as
+   it is for rule 4.
 
 Three escapes: a `wip:` subject needs `WIP=1` in the command and skips every
 other rule; a subject that a tool writes (`Revert "…"`, `fixup!`, `squash!`) is

@@ -37,8 +37,9 @@ ask the user how it should be split rather than committing it as-is.
 
 **Messages.** Brief, and never a rephrasing of the code. Write no body clause
 that a reader can derive from the diff. One or two sentences is usually enough.
-Write the message in Simplified Technical English: one idea per sentence, the
-active voice, one word for one meaning, and no idiom or metaphor.
+Write the message in Simplified Technical English: one idea per sentence of 25
+words or fewer, the active voice, a simple tense, one word for one meaning, and
+no idiom or metaphor.
 
 **Subject.** Write `type(scope): description.` The type is mandatory, the scope
 is optional, and a `!` before the colon marks a breaking change. The description

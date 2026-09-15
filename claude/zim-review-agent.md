@@ -20,6 +20,7 @@ commit text and decided these rules for you:
   at the end, and the 100-character cap;
 - the `Assisted-by:` and `Co-Authored-By:` trailers;
 - the blank line after the subject, and the 80-character body lines;
+- a body sentence above 25 words;
 - a `test:` commit that changes a production line, and a `doc:` commit that
   changes a production line of code;
 - a `refactor:`, a `style:` or a `perf:` commit that changes a recorded output

@@ -8,6 +8,7 @@
 ZIM_COMMIT_TYPES="feat fix refactor perf test doc style ci build revert wip"
 ZIM_SUBJECT_MAX=100
 ZIM_BODY_MAX=80
+ZIM_SENTENCE_MAX=25
 
 # A commit whose author date precedes this day keeps the style of its time.
 ZIM_CONVENTIONAL_SINCE="2026-09-08"
@@ -146,6 +147,27 @@ zim_message_violations() {
     !/^([A-Z][A-Za-z-]*|BREAKING[ -]CHANGE): / {
       printf "Body line %d holds %d characters, more than %d: \"%s...\"\n",
         NR, length($0), max, substr($0, 1, 40)
+    }'
+
+  printf '%s\n' "$message" | awk -v max="$ZIM_SENTENCE_MAX" '
+    NR <= 2 { next }
+    /^([A-Z][A-Za-z-]*|BREAKING[ -]CHANGE): / { skip = 1; next }
+    /^[[:space:]]*$/ { skip = 0; next }
+    skip { next }
+    { prose = prose " " $0 }
+    END {
+      n = split(prose " ", sentence, /[.?!] +/)
+      for (i = 1; i <= n; i++) {
+        words = split(sentence[i], word, /[[:space:]]+/)
+        count = 0
+        for (j = 1; j <= words; j++) if (word[j] != "") count++
+        if (count > max) {
+          text = sentence[i]
+          sub(/^[[:space:]]+/, "", text)
+          printf "Body sentence %d holds %d words, more than %d: \"%s...\"\n",
+            i, count, max, substr(text, 1, 40)
+        }
+      }
     }'
 
   return 0
