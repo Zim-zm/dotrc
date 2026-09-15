@@ -37,9 +37,21 @@ ask the user how it should be split rather than committing it as-is.
 
 **Messages.** Brief, and never a rephrasing of the code. Write no body clause
 that a reader can derive from the diff. One or two sentences is usually enough.
-Write the message in Simplified Technical English: one idea per sentence of 25
-words or fewer, the active voice, a simple tense, one word for one meaning, and
-no idiom or metaphor.
+
+**Simplified Technical English.** The message follows ASD-STE100:
+
+- one idea in a sentence, and 25 words or fewer in it;
+- 6 sentences or fewer in a paragraph;
+- the active voice, and the sentence names the agent of the action;
+- a simple tense, and the present where it fits;
+- one word for one meaning, and the same word for the same thing;
+- no idiom, no slang, no metaphor;
+- no noun made from a verb: write "the guard reads the message", not "the guard
+  does a read of the message";
+- no `-ing` form as a noun or an adjective;
+- 3 words or fewer in a noun cluster;
+- the articles stay: "the file", not "file";
+- a code identifier, a path and a command name stay as they are.
 
 **Subject.** Write `type(scope): description.` The type is mandatory, the scope
 is optional, and a `!` before the colon marks a breaking change. The description
