@@ -75,6 +75,8 @@ the installer warns you when it makes one.
 9. A body sentence holds 25 words or fewer, the ASD-STE100 limit for a
    descriptive sentence. A block that opens with a `Word:` prefix is exempt, as
    it is for rule 4.
+10. A `feat:`, a `fix:` or a `perf:` commit carries no `Mechanical:` line. A
+    mechanical sweep is its own `refactor:` commit before it.
 
 Three escapes: a `wip:` subject needs `WIP=1` in the command and skips every
 other rule; a subject that a tool writes (`Revert "…"`, `fixup!`, `squash!`) is

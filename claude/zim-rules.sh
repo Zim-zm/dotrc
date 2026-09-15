@@ -130,6 +130,12 @@ zim_message_violations() {
         echo "A doc: commit changes $code_lines production code lines. Use feat: or fix:, or move the production change to its own commit." ;;
   esac
 
+  case "$prefix" in
+    feat|fix|perf)
+      printf '%s\n' "$message" | grep -qE '^Mechanical:' &&
+        echo "A $prefix: commit carries a Mechanical: line. A mechanical sweep is its own refactor: commit before this one. Use Atomic: when this commit cannot be split." ;;
+  esac
+
   if [ -n "$recorded_output" ]; then
     case "$prefix" in
       refactor|style|perf)

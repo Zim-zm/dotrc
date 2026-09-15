@@ -25,6 +25,7 @@ commit text and decided these rules for you:
   changes a production line of code;
 - a `refactor:`, a `style:` or a `perf:` commit that changes a recorded output
   with no `Output-justification:` line;
+- a `Mechanical:` line on a `feat:`, a `fix:` or a `perf:` commit;
 - `production_lines` above 100 without an `Atomic:` or a `Mechanical:` line.
 
 Report one of these rules **only** when a `mechanical:` line states it, and copy
