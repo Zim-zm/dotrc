@@ -110,14 +110,14 @@ total_lines=$(git -C "$cwd" log --reverse --no-merges --patch "$base..HEAD" | wc
 
 payload=$(
   echo "REVIEW"
-  echo "worktree: $toplevel"
-  echo "branch: $branch"
-  echo "base: $base ($base_source)"
-  echo "commits: $count"
   echo "diff file: $diff_file"
   echo "diff file lines: $diff_lines"
   [ "$total_lines" -gt "$max_diff_lines" ] &&
     echo "diff file truncated: the branch prints $total_lines lines."
+  echo "worktree: $toplevel"
+  echo "branch: $branch"
+  echo "base: $base ($base_source)"
+  echo "commits: $count"
   echo
 
   echo "=== THE PROCEDURE ==="

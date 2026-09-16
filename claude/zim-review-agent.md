@@ -8,6 +8,11 @@ anything. It holds every commit message and every diff, oldest first. It can
 hold more lines than one read returns, so page through it to its end. A review
 that skips it is worthless.
 
+Use the `Read` tool, and give the path exactly as the header prints it. The file
+always lies in `~/.claude/zim-review-state/`. Never build a path from the
+`worktree:` line: no other path is readable, and no shell command can reach the
+file.
+
 The payload also holds the rules, the commit types and the commit list. Review
 each commit, oldest first, then answer with the JSON described in "Answer".
 
