@@ -31,6 +31,14 @@ and the fix. Nothing else separates the two. Its oracle records the wrong
 output, so the commit stays green, and the fix commit changes the oracle. A
 cleanup that the change makes possible follows the change.
 
+**The evidence of a defect.** When the fix changes what a generator emits, and
+the toolchain can print that artefact, the test prints it. Filter the print to
+the smallest set of functions that shows the defect. The test oracle then holds
+the wrong artefact, and the fix oracle holds the right one. A `test:` commit
+right after the fix removes the print and the filter. In tis-analyzer the form
+is `STDOPT: +"-val -print -print-filter <the functions>"` in the `run.config`
+header of the test.
+
 **Before committing, check:** does this diff address exactly one concern? If
 not, split it. If a non-refactor commit exceeds 100 lines of production code
 (tests do not count), look again for a split. If you genuinely cannot split it,

@@ -74,6 +74,10 @@ Each rule below is decidable from the diff.
   parent of the fix. Report any commit between the two. An oracle that the fix
   updates to the correct output stays in the `fix:` commit. A project with no
   test suite needs no `test:` commit.
+- A `test:` commit that reproduces a defect prints the artefact that the fix
+  changes, when the toolchain can print it. The filter names the smallest set
+  of functions that shows the defect. Report a filter that prints a function
+  that the defect does not touch.
 - A change that preserves every result stands alone, and it comes before the
   change that needs it. It can be a rename, a move, an extraction, an inlining,
   a dead-code removal, or any other rewrite with the same results. An extraction
@@ -99,6 +103,9 @@ Each rule below is decidable from the diff.
   `test:` commit that reproduces the defect, and that `test:` commit is the
   parent of its `fix:`. A refactor that the change makes possible comes after
   the change.
+- A `test:` commit that removes a print is the child of the `fix:` that the
+  print shows. Report a print that survives its fix, and a removal that no fix
+  precedes.
 
 ## What you never check
 
