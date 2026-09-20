@@ -21,7 +21,8 @@ here=$(cd "$(dirname "$0")" && pwd)
 claude_dir="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 vendor=hooks/commit
 mechanism="zim-paths.sh zim-rules.sh zim-commit-guard.sh zim-review-gate.sh
-  zim-review-agent.md zim-audit-guard.sh zim-stop-hook-prompt.txt"
+  zim-review-agent.md zim-audit-guard.sh zim-stop-hook-prompt.txt
+  zim-gemini-after-agent.sh"
 
 project=""
 mode=""
@@ -146,6 +147,23 @@ edit "$settings" --arg gate "Bash($vendor/zim-review-gate.sh:*)" '
   .permissions.allow //= []
   | .permissions.allow |= (. + [$gate, "Read(~/.claude/zim-review-state/**)"] | unique)'
 installed+=("${settings#"$top"/}")
+
+# The Gemini CLI reads one project settings file and knows no local variant,
+# so local mode registers its hook only when the branch does not track the
+# file.
+gemini_settings="$top/.gemini/settings.json"
+if [ "$mode" = local ] &&
+   git -C "$top" ls-files --error-unmatch .gemini/settings.json >/dev/null 2>&1; then
+  skipped+=(.gemini/settings.json)
+else
+  mkdir -p "$top/.gemini"
+  edit "$gemini_settings" --arg cmd "./$vendor/zim-gemini-after-agent.sh" '
+    .hooks //= {} | .hooks.AfterAgent //= []
+    | if any(.hooks.AfterAgent[]; any(.hooks[]?; .command == $cmd)) then .
+      else .hooks.AfterAgent += [{hooks: [{type: "command", command: $cmd,
+             name: "Commit style review", timeout: 300000}]}] end'
+  installed+=(.gemini/settings.json)
+fi
 
 echo "installed into $top, in $mode mode:"
 printf '  %s\n' "${installed[@]}"

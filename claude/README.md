@@ -10,7 +10,7 @@ shares the author's context inherits the author's excuses.
 | trigger | what happens | cost |
 | --- | --- | --- |
 | `git commit` | `zim-commit-guard.sh` refuses a message that breaks a mechanical rule, before git writes it | milliseconds |
-| the session stops | a sub-agent reviews the branch against the written rules, once per HEAD sha | 4.8 s median, 52 s on a 10-commit branch, measured over 384 runs |
+| the session stops | a sub-agent reviews the branch against the written rules, once per HEAD sha; in the Gemini CLI, the `AfterAgent` hook runs the same review headless on Flash | 4.8 s median, 52 s on a 10-commit branch, measured over 384 runs |
 | `/check-style` | the same review, now, whatever the state of the tree | the same |
 | `/deep-review` | a review of the change against its claim, after you approve it | minutes; 17.8 min for one commit of a large OCaml pass |
 | any agent spawn | `zim-audit-guard.sh` blocks a deep review that you did not approve | milliseconds |
@@ -65,6 +65,12 @@ Two modes:
 Every worktree gets its own install: the files sit inside the worktree, and the
 hook commands read `$CLAUDE_PROJECT_DIR`.
 
+The installer also registers the `AfterAgent` hook in `.gemini/settings.json`,
+which the Gemini CLI reads from the project. Gemini has no local settings
+variant, so local mode leaves that file alone when the branch tracks it. The
+Gemini review needs the `gemini` command on the machine; the hook exits quietly
+without it.
+
 ### The git tier, in tracked mode
 
 The project's own `commit-msg` hook gives the same verdict to every tool, Claude
@@ -95,7 +101,8 @@ skills linked into `~/.claude/skills/` and four entries in
 | `zim-review-gate.sh` | decides whether a review is due, prints what to review, prints the brief of a deep review, and holds the state modes |
 | `zim-review-agent.md` | the procedure that the reviewing sub-agent follows |
 | `zim-audit-guard.sh` | `PreToolUse` on `Agent`: blocks an unapproved deep review and consumes the approval |
-| `zim-stop-hook-prompt.txt` | the prompt that the `Stop` hook runs |
+| `zim-stop-hook-prompt.txt` | the prompt that the Claude `Stop` hook runs |
+| `zim-gemini-after-agent.sh` | the Gemini `AfterAgent` hook: runs the gate, then the reviewer headless with the diff on stdin, records a pass, and hands a finding back to the agent |
 | `RULES.md` | the general rule file, which the reviewer reads before the project file |
 | `projects/<name>/` | the policy and the rule file of one project |
 | `skills/check-style/` | the on-demand style review |
@@ -144,9 +151,9 @@ interior line of a block comment that carries no delimiter counts as code, and
 the deletion of the two delimiters around live code counts as a comment change.
 The style review reads the whole diff and catches the second case.
 
-The models: Sonnet 5 for the style review, Opus 5 for the deep review. Do not
-use Haiku for a review: 384 recorded runs on Haiku reported a finding zero
-times.
+The models: Sonnet 5 for the style review, Opus 5 for the deep review, and
+`gemini-2.5-flash` for the style review under the Gemini CLI. Do not use Haiku
+for a review: 384 recorded runs on Haiku reported a finding zero times.
 
 ## The review base
 
