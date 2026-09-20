@@ -1,39 +1,16 @@
-# The rules of the zim-code commit style that a script can decide.
-# Sourced by zim-commit-guard.sh, which checks a commit before git makes it,
-# and by zim-review-gate.sh, which checks the commits of a branch.
+# The rules of the commit style that a script can decide. Sourced by
+# zim-commit-guard.sh, which checks a commit before git makes it, by the
+# commit-msg git hook of a project, and by zim-review-gate.sh, which checks the
+# commits of a branch. The values come from policy.sh, through zim-paths.sh.
 
 [ -n "${ZIM_NON_PRODUCTION_PATHS+x}" ] ||
   source "$(dirname "${BASH_SOURCE[0]}")/zim-paths.sh"
-
-ZIM_COMMIT_TYPES="feat fix refactor perf test doc style ci build revert wip"
-ZIM_SUBJECT_MAX=100
-ZIM_BODY_MAX=80
-ZIM_SENTENCE_MAX=25
-
-# A commit whose author date precedes this day keeps the style of its time.
-ZIM_CONVENTIONAL_SINCE="2026-09-08"
-
-zim_commit_type_table() {
-  cat <<'TABLE'
-feat      a capability the project did not have: a feature, an option, a supported construct
-fix       a wrong result, a crash or a wrong message, in behaviour already claimed
-refactor  a code change with no change of any result, such as a rename, a move, an extraction, an inlining or a dead-code removal
-perf      a speed or a memory gain with no change of any result
-test      a test, a run.config or an oracle; it changes no production line
-doc       documentation only: a document, or a comment in code; it changes no code line
-style     formatting only: a formatter run, whitespace, a line wrap; it renames nothing
-ci        the pipeline: .gitlab-ci.yml, the runner images, the release scripts
-build     the build and the dependencies: dune, opam, the Makefile, build(deps): for a bump
-revert    a hand-written revert; the body names the reverted commit
-wip       a snapshot; it needs WIP=1 in the command and skips the other message rules
-TABLE
-}
 
 zim_subject_is_generated() {
   # A subject that git or the GitLab interface writes, which the author cannot
   # choose.
   case "$1" in
-    'Revert "'*|'fixup! '*|'squash! '*) return 0 ;;
+    'Revert "'*|'fixup! '*|'squash! '*|'Merge '*) return 0 ;;
   esac
   printf '%s' "$1" | grep -qE '^Apply [0-9]+ suggestion\(s\) to [0-9]+ file\(s\)$'
 }
@@ -50,8 +27,8 @@ zim_type_is_known() {
 
 zim_is_pure_refactor() {
   # $1: git directory, $2: a commit. True when the commit changes the code
-  # without changing what any test, oracle or document records. Such a commit
-  # needs no deep audit; the style review still covers it.
+  # without changing what any test, recorded output or document records. Such a
+  # commit needs no deep review; the style review still covers it.
   local dir="$1" sha="$2" prefix
   prefix=$(zim_subject_prefix "$(git -C "$dir" log -1 --format=%s "$sha")")
   case "$prefix" in
@@ -83,13 +60,18 @@ zim_message_violations() {
   [ -n "$author_date" ] && [ "$author_date" \< "$ZIM_CONVENTIONAL_SINCE" ] &&
     conventional=false
 
-  case "$subject" in
-    *.) ;;
-    *) echo "The subject does not end with a period: \"$subject\"" ;;
-  esac
-
   printf '%s\n' "$message" | grep -qi '^Co-Authored-By:' &&
     echo "The message carries a Co-Authored-By: trailer. Use Assisted-by: alone."
+
+  if [ "$production_lines" -gt 100 ]; then
+    printf '%s\n' "$message" | grep -qE '^(Atomic|Mechanical):' ||
+      echo "The commit changes $production_lines production lines and carries no Atomic: or Mechanical: line."
+  fi
+
+  # A commit older than the policy's since-date keeps the style of its time:
+  # the rules above held before that day, the rules below did not.
+  [ "$conventional" = false ] && return 0
+
   assisted=$(printf '%s\n' "$message" | grep -ci '^Assisted-by:')
   case "$assisted" in
     1) ;;
@@ -97,12 +79,10 @@ zim_message_violations() {
     *) echo "The message carries $assisted Assisted-by: trailers, not exactly one." ;;
   esac
 
-  if [ "$production_lines" -gt 100 ]; then
-    printf '%s\n' "$message" | grep -qE '^(Atomic|Mechanical):' ||
-      echo "The commit changes $production_lines production lines and carries no Atomic: or Mechanical: line."
-  fi
-
-  [ "$conventional" = false ] && return 0
+  case "$subject" in
+    *.) ;;
+    *) echo "The subject does not end with a period: \"$subject\"" ;;
+  esac
 
   types_re=$(printf '%s' "$ZIM_COMMIT_TYPES" | tr ' ' '|')
   if ! printf '%s' "$subject" |
@@ -177,4 +157,18 @@ zim_message_violations() {
     }'
 
   return 0
+}
+
+zim_diff_violations() {
+  # $1: git directory, $2: the full commit message, $3: the author date as
+  # YYYY-MM-DD or empty, remaining arguments: the diff range of the commit, or
+  # --cached for a commit that does not exist yet. Measures the diff, then
+  # prints the violations of the message, one per line.
+  local dir="$1" message="$2" author_date="$3"; shift 3
+  local lines code_lines recorded_output
+  lines=$(zim_production_lines "$dir" "$@")
+  code_lines=$(zim_production_code_lines "$dir" "$@")
+  recorded_output=$(zim_recorded_output_files "$dir" "$@" | head -1)
+  zim_message_violations "$message" "${lines:-0}" "$author_date" \
+    "${code_lines:-0}" "$recorded_output"
 }

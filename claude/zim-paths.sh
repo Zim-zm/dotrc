@@ -1,7 +1,18 @@
-# Pathspecs that exclude non-production files from a diff, the state directory
-# of the review system, and the base that a review covers.
-# Sourced by zim-review-gate.sh, zim-commit-guard.sh and zim-audit-guard.sh:
-# one source of truth.
+# The state directory of the review system, the diff helpers that read the
+# policy's pathspecs, the comment syntax of each extension, and the base that a
+# review covers. Sourced by zim-review-gate.sh, zim-commit-guard.sh and
+# zim-audit-guard.sh: one source of truth.
+#
+# The policy of the project sits next to this file as policy.sh. The installer
+# copies it there from projects/<name>/policy.sh.
+
+zim_here=$(dirname "${BASH_SOURCE[0]}")
+if [ ! -f "$zim_here/policy.sh" ]; then
+  echo "zim: $zim_here/policy.sh is missing. Run install.sh --project <policy dir>." >&2
+  return 1 2>/dev/null || exit 1
+fi
+source "$zim_here/policy.sh"
+unset zim_here
 
 ZIM_STATE_DIR="$HOME/.claude/zim-review-state"
 
@@ -11,17 +22,8 @@ zim_state_key() {
     sha1sum | cut -c1-16
 }
 
-ZIM_NON_PRODUCTION=(
-  ':!*/tests/*'
-  ':!tests/*'
-  ':!*/oracle/*'
-  ':!*.oracle'
-  ':!*doc/*'
-  ':!*.md'
-  ':!*.rst'
-)
-
-# The same paths, as a positive pathspec: what a production change must not touch.
+# The non-production pathspecs, as a positive pathspec: what a production
+# change must not touch.
 ZIM_NON_PRODUCTION_PATHS=()
 for zim_p in "${ZIM_NON_PRODUCTION[@]}"; do
   ZIM_NON_PRODUCTION_PATHS+=("${zim_p#:!}")
@@ -34,12 +36,6 @@ zim_non_production_files() {
   git -C "$dir" diff --name-only "$@" -- "${ZIM_NON_PRODUCTION_PATHS[@]}" 2>/dev/null
 }
 
-ZIM_RECORDED_OUTPUT=(
-  "oracle/*"
-  "*/oracle/*"
-  "*.oracle"
-)
-
 zim_recorded_output_files() {
   # $1: git directory, remaining arguments: a diff range or --cached. Prints the
   # changed files that record a result of the program.
@@ -51,7 +47,7 @@ zim_production_lines() {
   # $1: git directory, remaining arguments: a diff range or --cached.
   local dir="$1"; shift
   git -C "$dir" diff --numstat "$@" -- . "${ZIM_NON_PRODUCTION[@]}" 2>/dev/null |
-    awk '{ added += $1; removed += $2 } END { print added + removed + 0 }'
+    awk '$1 != "-" { added += $1; removed += $2 } END { print added + removed + 0 }'
 }
 
 zim_comment_markers() {
@@ -59,7 +55,7 @@ zim_comment_markers() {
   # the language, separated by "|". Prints nothing for an extension that this
   # table does not name.
   case "$1" in
-    *.c|*.h|*.cpp|*.cxx|*.cc|*.hpp|*.hh|*.rs|*.js|*.ts|*.java|*.css)
+    *.c|*.h|*.cpp|*.cxx|*.cc|*.hpp|*.hh|*.rs|*.js|*.mjs|*.ts|*.java|*.css|*.svelte)
       printf '%s' '//|/*|*/' ;;
     *.ml|*.mli|*.mly|*.mll)
       printf '%s' '|(*|*)' ;;
@@ -84,7 +80,7 @@ zim_production_code_lines() {
     markers=$(zim_comment_markers "$file")
     if [ -z "$markers" ]; then
       count=$(git -C "$dir" diff --numstat "$@" -- "$file" 2>/dev/null |
-        awk '{ added += $1; removed += $2 } END { print added + removed + 0 }')
+        awk '$1 != "-" { added += $1; removed += $2 } END { print added + removed + 0 }')
     else
       IFS='|' read -r line_marker opener closer <<<"$markers"
       count=$(git -C "$dir" diff -U0 "$@" -- "$file" 2>/dev/null |
@@ -108,6 +104,29 @@ zim_production_code_lines() {
   printf '%s' "$total"
 }
 
+zim_rule_files() {
+  # $1: a directory inside a worktree. Prints the absolute path of each rule
+  # file of the policy that exists in the worktree, in the policy's order.
+  local top file
+  top=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 0
+  for file in "${ZIM_RULE_FILES[@]}"; do
+    [ -f "$top/$file" ] && printf '%s\n' "$top/$file"
+  done
+  return 0
+}
+
+zim_mr_target() {
+  # $1: a directory inside a worktree. Prints the target branch of the merge
+  # request of the current branch, as origin/<branch>, when glab can name one.
+  local dir="$1" target
+  command -v glab >/dev/null || return 1
+  target=$(cd "$dir" && glab mr view --output json 2>/dev/null |
+    jq -r '.target_branch // empty' 2>/dev/null)
+  [ -n "$target" ] || return 1
+  git -C "$dir" rev-parse --verify --quiet "origin/$target" >/dev/null || return 1
+  printf 'origin/%s' "$target"
+}
+
 ZIM_BASE_CANDIDATES=(origin/main origin/master origin/develop)
 ZIM_BASE_WALK_MAX=1000
 
@@ -129,7 +148,8 @@ zim_review_base() {
   # An integration branch moves on its own, so it is no longer an ancestor of
   # HEAD. A shared merge-base keeps it a candidate.
   integration=$( { [ -n "$default_ref" ] && printf '%s\n' "$default_ref"
-                   printf '%s\n' "${ZIM_BASE_CANDIDATES[@]}"; } | awk '!seen[$0]++')
+                   printf '%s\n' "$ZIM_BASE_DEFAULT" "${ZIM_BASE_CANDIDATES[@]}"; } |
+                 awk '!seen[$0]++')
   best=""; best_count=""
   while IFS= read -r ref; do
     [ -n "$ref" ] && [ "$ref" != "$branch" ] || continue
@@ -168,5 +188,5 @@ zim_review_base() {
     printf '%s\t%s' "$best" "the integration branch, $best_count $count_label below HEAD"
     return
   fi
-  printf '%s\t%s' "origin/master" "the last-resort default"
+  printf '%s\t%s' "$ZIM_BASE_DEFAULT" "the last-resort default of the policy"
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 # PreToolUse guard on Bash. Blocks a `git commit` that breaks a mechanical rule
-# of the zim-code style, and injects the rules that need judgment.
+# of the commit style, and injects the rules that need judgment.
 
 set -u
 
@@ -43,6 +43,11 @@ fi
 [ "$(git -C "$target" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ] || exit 0
 
 case "$target" in /tmp/*|*/scratchpad/*) exit 0 ;; esac
+
+# The guard judges a worktree of its own project, and no other: a commit in
+# another project answers to that project's guard, or to none.
+target_policy="$(git -C "$target" rev-parse --show-toplevel 2>/dev/null)/hooks/commit/policy.sh"
+[ -f "$target_policy" ] && grep -q "^ZIM_PROJECT=$ZIM_PROJECT\$" "$target_policy" || exit 0
 
 git_dir=$(git -C "$target" rev-parse --git-dir 2>/dev/null)
 [ -f "$git_dir/MERGE_HEAD" ] && exit 0
@@ -103,9 +108,6 @@ subject=$(printf '%s' "$message" | head -1)
 
 diff_range=(--cached)
 [ "$amend" = true ] && diff_range+=(HEAD^)
-lines=$(zim_production_lines "$target" "${diff_range[@]}")
-code_lines=$(zim_production_code_lines "$target" "${diff_range[@]}")
-recorded_output=$(zim_recorded_output_files "$target" "${diff_range[@]}" | head -1)
 
 violations=()
 
@@ -120,12 +122,11 @@ author_date=""
 
 while IFS= read -r violation; do
   violations+=("$violation")
-done < <(zim_message_violations "$message" "${lines:-0}" "$author_date" \
-  "${code_lines:-0}" "$recorded_output")
+done < <(zim_diff_violations "$target" "$message" "$author_date" "${diff_range[@]}")
 
 if [ ${#violations[@]} -gt 0 ]; then
   {
-    echo "The commit breaks the zim-code style:"
+    echo "The commit breaks the commit style of $ZIM_PROJECT:"
     printf '  - %s\n' "${violations[@]}"
     echo "Fix the message or the split, then commit again."
   } >&2
@@ -142,7 +143,7 @@ comments=$(git -C "$target" diff --cached -U0 -- . "${ZIM_NON_PRODUCTION[@]}" |
 [ "${comments:-0}" -gt 0 ] &&
   notes+=("The diff adds $comments comment lines. Apply the deletion test to each one: a comment that a code reader does not need must go.")
 
-context="Apply the zim-code style: one concern per commit, and the message gives the reason, not the steps."
+context="Apply the commit style: one concern per commit, and the message gives the reason, not the steps."
 context="$context The subject reads <type>(<scope>): <lowercase description>, ends with a period, and holds $ZIM_SUBJECT_MAX characters or fewer. The types are:
 $(zim_commit_type_table)"
 [ ${#notes[@]} -gt 0 ] && context="$context $(printf '%s ' "${notes[@]}")"
