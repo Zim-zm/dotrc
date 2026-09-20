@@ -92,6 +92,9 @@ reviewer exempt them by author date.
   deletion test.
 - The controlled language of `AGENTS.md` applies: 20 words in a comment
   sentence.
+- In a test, a comment that names the scenario or the expected behavior
+  passes the deletion test: the assertion shows the value, not why the case
+  matters.
 
 ## File headers
 
