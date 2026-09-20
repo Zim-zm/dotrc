@@ -122,22 +122,41 @@ Each rule below is decidable from the diff.
 - Whether the branch duplicates code that it does not touch. You see the diff
   only. Report such a suspicion as a question, and mark it as unverified.
 
+## The two grades
+
+A finding has one of two grades. Grade each one before you answer.
+
+- **Blocking** — the shape of the diff is wrong: the type does not fit the
+  diff, the diff holds two concerns, a result-preserving change hides inside
+  a change, the test commit of a defect is missing or misplaced, a commit
+  duplicates logic that another commit adds, the scope names nothing the diff
+  changes, a print survives its fix. The branch must change before it merges.
+- **A note** — the words could be better: a body clause that a reader can
+  derive, a word that breaks the controlled language, a comment that fails
+  the deletion test or its punctuation, a name that needs a comment. The
+  author may leave it, and a pass stands with it.
+
 ## Answer
 
-Answer with JSON and nothing else.
+Answer with JSON and nothing else. Judge every commit of the list before you
+record anything. The gate script is the one the `gate:` line of the header
+names, run from the worktree of the header.
 
-- No finding: record nothing until you have judged every commit of the list.
-  Then run the gate script that the `gate:` line of the header names, from the
-  worktree of the header: `<gate> <the worktree of the header> false
-  --record-pass`, and answer `{"ok": true}`. The record tells a later deep
-  review that the types of these commits are trustworthy.
-- One finding or more: `{"ok": false, "reason": "<the findings>"}`
+- No finding: run `<gate> <the worktree of the header> false --record-pass`,
+  then answer `{"ok": true}`. The record tells a later deep review that the
+  types of these commits are trustworthy.
+- Notes only: run the same `--record-pass`, then answer
+  `{"ok": true, "notes": "<the notes>"}`.
+- One blocking finding or more: record nothing, and answer
+  `{"ok": false, "reason": "<the blocking findings>"}`. When notes exist as
+  well, add them after the blocking findings, under one line that reads
+  `Notes:`.
 
-Write the `reason` in Simplified Technical English. Group the findings by
-commit. Give the short sha, the rule, and the evidence from the diff. Write one
-sentence for each finding. Order the commits oldest first, and the findings by
-severity inside a commit. Add no praise, no summary of the branch, and no
-suggestion that you did not derive from a rule above.
+Write the `reason` and the `notes` in Simplified Technical English. Group the
+findings by commit. Give the short sha, the rule, and the evidence from the
+diff. Write one sentence for each finding. Order the commits oldest first, and
+the findings by severity inside a commit. Add no praise, no summary of the
+branch, and no suggestion that you did not derive from a rule above.
 
 Quote the evidence from the diff file. A finding whose evidence you cannot quote
 is not a finding. State a finding that you could not verify as a question, and

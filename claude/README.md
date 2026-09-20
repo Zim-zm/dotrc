@@ -155,6 +155,17 @@ The models: Sonnet 5 for the style review, Opus 5 for the deep review, and
 `gemini-2.5-flash` for the style review under the Gemini CLI. Do not use Haiku
 for a review: 384 recorded runs on Haiku reported a finding zero times.
 
+## Two grades
+
+A finding is **blocking** when the shape of the diff is wrong: the type, the
+concerns, a hidden refactor, a missing test commit, a duplication. It is a
+**note** when the words could be better: a derivable clause, a word outside the
+controlled language, a comment, a name. A pass stands with notes, so a note
+never withholds the record and never blocks a push; the user reads it and
+decides. Without the grade, every fix made a new HEAD, the new HEAD drew a new
+sample of the reviewer's opinion, and the cycle ended only when a sample
+happened to return nothing.
+
 ## Opaque files
 
 `ZIM_OPAQUE` in the policy names the paths whose text a reviewer never needs:

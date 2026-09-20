@@ -44,6 +44,11 @@ ok=$(printf '%s' "$answer" | jq -r 'if has("ok") then (.ok | tostring) else empt
 case "$ok" in
   true)
     "$gate" "$cwd" false --record-pass >/dev/null
+    notes=$(printf '%s' "$answer" | jq -r '.notes // empty')
+    [ -n "$notes" ] &&
+      jq -n --arg m "The style review recorded a pass. These notes block nothing; the user decides.
+
+$notes" '{systemMessage: $m}'
     exit 0 ;;
   false)
     reason=$(printf '%s' "$answer" | jq -r '.reason // empty')

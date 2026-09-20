@@ -32,12 +32,10 @@ of the tree.
 
 4. Report the answer of the sub-agent:
 
-   - `{"ok": true}`: record the pass, then say that the review found nothing:
-
-     ```
-     hooks/commit/zim-review-gate.sh "$PWD" false --record-pass
-     ```
-
+   - `{"ok": true}`: the sub-agent recorded the pass; say that the review
+     found nothing.
+   - `{"ok": true, "notes": ...}`: the pass is recorded. Give the notes as
+     the sub-agent wrote them, and say that they block nothing.
    - `{"ok": false, "reason": ...}`: give the findings as the sub-agent wrote
      them, grouped by commit. Record nothing. Do not soften them. Do not argue
      with them. Fix nothing unless the user asks for it.
@@ -46,3 +44,4 @@ The record gates the deep review of the `deep-review` skill, which reads the
 type of each commit. Only this review checks that the type fits the diff.
 
 Never run the review in this session, and never send it to a second agent.
+
