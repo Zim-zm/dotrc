@@ -43,6 +43,42 @@ zim_recorded_output_files() {
   git -C "$dir" diff --name-only "$@" -- "${ZIM_RECORDED_OUTPUT[@]}" 2>/dev/null
 }
 
+# The opaque pathspecs, as exclusions: what a patch must not print.
+ZIM_OPAQUE_EXCLUDE=()
+for zim_p in "${ZIM_OPAQUE[@]}"; do
+  ZIM_OPAQUE_EXCLUDE+=(":!$zim_p")
+done
+unset zim_p
+
+zim_opaque_files() {
+  # $1: git directory, remaining arguments: a diff range or --cached. Prints
+  # the changed files whose content a reviewer never reads: the opaque paths of
+  # the policy, and every binary file.
+  local dir="$1"; shift
+  {
+    [ ${#ZIM_OPAQUE[@]} -gt 0 ] &&
+      git -C "$dir" diff --name-only "$@" -- "${ZIM_OPAQUE[@]}" 2>/dev/null
+    git -C "$dir" diff --numstat "$@" 2>/dev/null | awk -F'\t' '$1 == "-" { print $3 }'
+  } | sort -u
+}
+
+zim_behaviour_files() {
+  # $1: git directory, remaining arguments: a diff range or --cached. Prints
+  # the changed production files that a reviewer reads: neither non-production,
+  # nor opaque, nor binary.
+  local dir="$1"; shift
+  git -C "$dir" diff --numstat "$@" -- . "${ZIM_NON_PRODUCTION[@]}" "${ZIM_OPAQUE_EXCLUDE[@]}" 2>/dev/null |
+    awk -F'\t' '$1 != "-" { print $3 }'
+}
+
+zim_behaviour_lines() {
+  # $1: git directory, remaining arguments: a diff range or --cached. Counts
+  # the changed lines of the files that zim_behaviour_files prints.
+  local dir="$1"; shift
+  git -C "$dir" diff --numstat "$@" -- . "${ZIM_NON_PRODUCTION[@]}" "${ZIM_OPAQUE_EXCLUDE[@]}" 2>/dev/null |
+    awk '$1 != "-" { added += $1; removed += $2 } END { print added + removed + 0 }'
+}
+
 zim_production_lines() {
   # $1: git directory, remaining arguments: a diff range or --cached.
   local dir="$1"; shift

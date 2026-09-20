@@ -25,7 +25,7 @@ The mechanism names no project. A project's policy lives in `projects/<name>/`:
 
 | file | role |
 | --- | --- |
-| `policy.sh` | the commit types and their table, the subject and body limits, the since-date, the pathspecs that are not production code, the paths that record an output, the default review base, the rule files, the skills to install |
+| `policy.sh` | the commit types and their table, the subject and body limits, the since-date, the pathspecs that are not production code, the paths that record an output, the opaque paths, the default review base, the rule files, the skills to install |
 | the rule files | what only the project can say: which artefact records an output, the print form of its toolchain, the file header, the paths of the size tripwire. `COMMITS.md` here |
 
 `RULES.md` is the general rule file. It is the same in every project, so a
@@ -154,6 +154,16 @@ The style review reads the whole diff and catches the second case.
 The models: Sonnet 5 for the style review, Opus 5 for the deep review, and
 `gemini-2.5-flash` for the style review under the Gemini CLI. Do not use Haiku
 for a review: 384 recorded runs on Haiku reported a finding zero times.
+
+## Opaque files
+
+`ZIM_OPAQUE` in the policy names the paths whose text a reviewer never needs:
+recordings, lockfiles, generated data. A binary file is opaque whatever its
+path, by git's own detection. The diff file carries the stat line of an opaque
+file and never its patch, so a 25,000-line recording cannot fill the 6000-line
+cap and blind the review of the code after it. The brief of a deep review
+counts the behaviour files without them, and prints how many opaque files the
+range touched.
 
 ## The review base
 

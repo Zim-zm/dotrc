@@ -43,6 +43,16 @@ ZIM_RECORDED_OUTPUT=(
   'test_cases/*.json'
 )
 
+# The paths whose text a reviewer never needs: the diff file carries their
+# stat line only, and the deep review counts them as data. A binary file is
+# opaque whatever its path.
+ZIM_OPAQUE=(
+  'test_samples/*'
+  'data/*.json'
+  'Cargo.lock'
+  'package-lock.json'
+)
+
 # The last-resort review base, when no config key, no branch tip below HEAD and
 # no integration branch answers.
 ZIM_BASE_DEFAULT=origin/main

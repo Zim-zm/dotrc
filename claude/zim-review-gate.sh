@@ -40,6 +40,30 @@ max_stdout_bytes=24000
 
 skip() { echo "SKIP: $1"; exit 0; }
 
+zim_commit_patches() {
+  # $1: git directory, $2: a range. Prints each commit with its message and
+  # its patch, oldest first. An opaque file shows its stat line only: a
+  # recording or a lockfile would fill the cap and blind the review.
+  local dir="$1" range="$2" sha opaque
+  git -C "$dir" rev-list --reverse --no-merges "$range" |
+    while IFS= read -r sha; do
+      echo
+      echo "### COMMIT $sha"
+      git -C "$dir" log -1 --format=%B "$sha"
+      echo "--- diff ---"
+      opaque=$(zim_opaque_files "$dir" "$sha^!")
+      if [ -n "$opaque" ]; then
+        echo "opaque files, stat only:"
+        printf '%s\n' "$opaque" | while IFS= read -r file; do
+          git -C "$dir" diff --numstat "$sha^!" -- "$file" |
+            awk -F'\t' '{ if ($1 == "-") print "  " $3 " | binary"
+                          else print "  " $3 " | +" $1 " -" $2 }'
+        done
+      fi
+      git -C "$dir" diff --patch "$sha^!" -- . "${ZIM_OPAQUE_EXCLUDE[@]}"
+    done
+}
+
 [ "$force" = false ] && [ "$stop_hook_active" = "true" ] &&
   skip "a stop hook already continues this turn"
 
@@ -107,8 +131,9 @@ if [ "$mode" = "--brief" ]; then
   echo "base: $base ($base_source)"
   echo "range: $base..HEAD"
   echo "style review: $("${BASH_SOURCE[0]}" "$cwd" false --check-pass)"
-  echo "behaviour files: $(git -C "$cwd" diff --name-only "$base...HEAD" -- . "${ZIM_NON_PRODUCTION[@]}" | wc -l)"
-  echo "behaviour lines: $(zim_production_lines "$cwd" "$base...HEAD")"
+  echo "behaviour files: $(zim_behaviour_files "$cwd" "$base...HEAD" | wc -l)"
+  echo "behaviour lines: $(zim_behaviour_lines "$cwd" "$base...HEAD")"
+  echo "opaque files touched: $(zim_opaque_files "$cwd" "$base...HEAD" | wc -l)"
   echo
   echo "=== COMMITS, OLDEST FIRST ==="
   git -C "$cwd" log --reverse --no-merges --format='%h%x09%s' "$base..HEAD" |
@@ -158,12 +183,10 @@ printf '%s\n' "$head" > "$state_file"
     echo
   done < <(zim_rule_files "$cwd")
   echo "=== THE COMMITS AND THEIR DIFFS, OLDEST FIRST ==="
-  git -C "$cwd" log --reverse --no-merges --patch \
-    --format='%n### COMMIT %H%n%B%n--- diff ---' "$base..HEAD" |
-    head -n "$max_diff_lines"
+  zim_commit_patches "$cwd" "$base..HEAD" | head -n "$max_diff_lines"
 } > "$diff_file"
 diff_lines=$(wc -l < "$diff_file")
-total_lines=$(git -C "$cwd" log --reverse --no-merges --patch "$base..HEAD" | wc -l)
+total_lines=$(zim_commit_patches "$cwd" "$base..HEAD" | wc -l)
 
 payload=$(
   echo "REVIEW"

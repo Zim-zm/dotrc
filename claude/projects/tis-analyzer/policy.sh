@@ -45,6 +45,11 @@ ZIM_RECORDED_OUTPUT=(
   '*.oracle'
 )
 
+# The paths whose text a reviewer never needs: the diff file carries their
+# stat line only, and the deep review counts them as data. A binary file is
+# opaque whatever its path.
+ZIM_OPAQUE=()
+
 # The last-resort review base, when no config key, no branch tip below HEAD and
 # no integration branch answers.
 ZIM_BASE_DEFAULT=origin/master
