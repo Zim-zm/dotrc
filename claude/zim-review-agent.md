@@ -122,6 +122,12 @@ Each rule below is decidable from the diff.
 - Whether the branch duplicates code that it does not touch. You see the diff
   only. Report such a suspicion as a question, and mark it as unverified.
 
+## What the user dismissed
+
+The payload may hold a `DISMISSED BY THE USER` section. The user read each
+finding there and chose to leave it. Do not report it again, in this form or
+in another. The rule it names still applies to a commit that it does not name.
+
 ## The two grades
 
 A finding has one of two grades. Grade each one before you answer.

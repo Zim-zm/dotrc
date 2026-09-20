@@ -17,6 +17,10 @@
 # --reviewed-head prints the last HEAD that a style review covered, whatever it
 # found. A push gate reads it.
 #
+# --dismiss "<finding>" records that the user read that finding on this branch
+# and leaves it. The payload of every later review carries it, and the
+# reviewer reports it no more.
+#
 # --brief prints the facts of a deep review: the base, each commit with its
 # size and its pure-refactor verdict, and the rule files. It spends nothing.
 #
@@ -80,6 +84,7 @@ state_file="$state_dir/$key"
 pass_file="$state_dir/$key.passed"
 approval_file="$state_dir/$key.review-approved"
 diff_file="$state_dir/$key.diff"
+dismissed_file="$state_dir/$key.dismissed"
 
 case "$mode" in
   --record-pass)
@@ -88,6 +93,11 @@ case "$mode" in
     exit 0 ;;
   --reviewed-head)
     cat "$state_file" 2>/dev/null
+    exit 0 ;;
+  --dismiss)
+    [ -n "${4:-}" ] || { echo "Name the finding to dismiss." >&2; exit 1; }
+    printf '%s\t%s\n' "$branch" "$(printf '%s' "$4" | tr '\n' ' ')" >> "$dismissed_file"
+    echo "DISMISSED on $branch: ${4}"
     exit 0 ;;
   --approve-review)
     printf '%s\t%s\n' "$head" "${4:-the branch}" > "$approval_file"
@@ -224,6 +234,12 @@ payload=$(
   echo "=== THE COMMIT TYPES ==="
   zim_commit_type_table
   echo
+
+  if [ -f "$dismissed_file" ] && grep -q "^$branch	" "$dismissed_file"; then
+    echo "=== DISMISSED BY THE USER ==="
+    grep "^$branch	" "$dismissed_file" | cut -f2- | sed 's/^/- /'
+    echo
+  fi
 )
 
 printf '%s\n' "$payload" | head -c "$max_stdout_bytes"

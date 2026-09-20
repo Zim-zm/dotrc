@@ -45,3 +45,14 @@ type of each commit. Only this review checks that the type fits the diff.
 
 Never run the review in this session, and never send it to a second agent.
 
+## A finding the user leaves
+
+When the user reads a finding or a note and decides to leave it, record the
+decision, with the finding as the sub-agent wrote it:
+
+```
+hooks/commit/zim-review-gate.sh "$PWD" false --dismiss "<the finding>"
+```
+
+Every later review of the branch receives it and reports it no more. Record a
+dismissal only when the user says so; never dismiss a finding on your own.
