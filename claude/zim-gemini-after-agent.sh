@@ -18,11 +18,13 @@ gate="$(dirname "${BASH_SOURCE[0]}")/zim-review-gate.sh"
 input=$(cat)
 cwd=$(printf '%s' "$input" | jq -r '.cwd // ""')
 stop_hook_active=$(printf '%s' "$input" | jq -r '.stop_hook_active // false')
+session=$(printf '%s' "$input" | jq -r '.session_id // ""')
 
 command -v gemini >/dev/null || exit 0
 
-payload=$("$gate" "$cwd" "$stop_hook_active")
+payload=$("$gate" "$cwd" "$stop_hook_active" --session "$session")
 case "$payload" in SKIP:*) exit 0 ;; esac
+worktree=$(printf '%s\n' "$payload" | sed -n 's/^worktree: //p' | head -1)
 
 diff_file=$(printf '%s\n' "$payload" | sed -n 's/^diff file: //p' | head -1)
 [ -f "$diff_file" ] || exit 0
@@ -33,7 +35,7 @@ there, and open no file. You have no shell, so do not run the gate: the
 launcher records a pass from your answer. Answer with the JSON the procedure
 describes and nothing else."
 
-response=$(cd "$cwd" && ZIM_REVIEW_CHILD=1 gemini -m "$model" --output-format json \
+response=$(cd "$worktree" && ZIM_REVIEW_CHILD=1 gemini -m "$model" --output-format json \
   -p "$preface
 
 $payload" < "$diff_file" 2>/dev/null | jq -r '.response // empty')
@@ -43,7 +45,7 @@ ok=$(printf '%s' "$answer" | jq -r 'if has("ok") then (.ok | tostring) else empt
 
 case "$ok" in
   true)
-    "$gate" "$cwd" false --record-pass >/dev/null
+    "$gate" "$worktree" false --record-pass >/dev/null
     notes=$(printf '%s' "$answer" | jq -r '.notes // empty')
     [ -n "$notes" ] &&
       jq -n --arg m "The style review recorded a pass. These notes block nothing; the user decides.

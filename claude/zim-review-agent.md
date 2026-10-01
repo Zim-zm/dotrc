@@ -146,7 +146,8 @@ A finding has one of two grades. Grade each one before you answer.
 
 Answer with JSON and nothing else. Judge every commit of the list before you
 record anything. The gate script is the one the `gate:` line of the header
-names, run from the worktree of the header.
+names. Run it as printed, from the directory you start in: the worktree of the
+header can be another one, without a copy of the gate.
 
 - No finding: run `<gate> <the worktree of the header> false --record-pass`,
   then answer `{"ok": true}`. The record tells a later deep review that the

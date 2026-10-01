@@ -16,6 +16,84 @@ unset zim_here
 
 ZIM_STATE_DIR="$HOME/.claude/zim-review-state"
 
+zim_git_dirs() {
+  # $1: the directory the command starts in, $2: a shell command, $3: a git
+  # subcommand. Prints one line for each `git $3` the command runs: the
+  # directory it runs in, after the cd segments before it and its own -C
+  # options. The line is empty when a path is beyond reading: a variable, a
+  # substitution, `cd -`, or a directory that does not exist.
+  #
+  # A session's shell returns to the session directory after each command, so
+  # work in another worktree reaches it only through cd or -C. Every hook that
+  # asks which worktree a command acts on asks here.
+  perl -MCwd=abs_path -e '
+    my ($dir, $cmd, $sub) = @ARGV;
+    my $home = $ENV{HOME};
+    sub resolve {
+      my ($base, $p) = @_;
+      return undef if !defined $base || !defined $p || $p eq "-" || $p =~ /[\$`]/;
+      $p =~ s{^~(?=/|$)}{$home};
+      my $r = $p =~ m{^/} ? $p : "$base/$p";
+      return -d $r ? abs_path($r) : undef;
+    }
+    # Split at the separators that no quote protects, and drop the body of
+    # each heredoc: prose there mentions a command without running it.
+    my (@segs, $seg, $q, @ends) = ((), "", "");
+    my @lines = split /\n/, $cmd, -1;
+    for my $line (@lines) {
+      if (@ends) { shift @ends if $line =~ /^\s*\Q$ends[0]\E\s*$/; next }
+      push @ends, $1 while $line =~ /<<-?\s*[\x27"]?(\w+)[\x27"]?/g;
+      for my $ch (split //, $line) {
+        if ($q ne "") { $seg .= $ch; $q = "" if $ch eq $q; next }
+        if ($ch eq "\x27" || $ch eq "\"") { $q = $ch; $seg .= $ch; next }
+        if ($ch =~ /[;&|()]/) { push @segs, $seg; $seg = ""; next }
+        $seg .= $ch;
+      }
+      if ($q eq "") { push @segs, $seg; $seg = "" } else { $seg .= "\n" }
+    }
+    push @segs, $seg;
+    for my $s (@segs) {
+      my @w;
+      push @w, defined $1 ? $1 : defined $2 ? $2 : $3
+        while $s =~ /\G\s*(?:\x27([^\x27]*)\x27|"([^"]*)"|(\S+))/gc;
+      shift @w while @w && ($w[0] =~ /^\w+=/ || $w[0] =~ /^(?:sudo|command|env)$/);
+      next unless @w;
+      if ($w[0] eq "cd") {
+        $dir = @w > 1 ? resolve($dir, $w[1]) : $home;
+        next;
+      }
+      next unless $w[0] =~ m{(?:^|/)git$};
+      my $at = $dir;
+      for (my $i = 1; $i < @w; $i++) {
+        my $x = $w[$i];
+        if ($x eq "-C") { $at = resolve($at, $w[++$i]); next }
+        if ($x =~ /^-(?:c|-git-dir|-work-tree|-namespace|-exec-path)$/) { $i++; next }
+        next if $x =~ /^-/;
+        print defined $at ? "$at\n" : "\n" if $x eq $sub;
+        last;
+      }
+    }
+  ' "$1" "$2" "$3"
+}
+
+zim_session_file() {
+  # $1: a session id. Lists the other worktrees the session committed in.
+  printf '%s' "$ZIM_STATE_DIR/session-$1.worktrees"
+}
+
+zim_record_session_worktree() {
+  # $1: a session id, $2: the session directory, $3: a worktree the session
+  # committed in. The style review at the end of the turn starts from the
+  # session directory, so it learns of another worktree only from this list.
+  local top list
+  top=$(git -C "$3" rev-parse --show-toplevel 2>/dev/null) || return 0
+  [ -n "$1" ] || return 0
+  [ "$top" = "$(git -C "$2" rev-parse --show-toplevel 2>/dev/null)" ] && return 0
+  mkdir -p "$ZIM_STATE_DIR"
+  list=$(zim_session_file "$1")
+  grep -qxF "$top" "$list" 2>/dev/null || printf '%s\n' "$top" >> "$list"
+}
+
 zim_state_key() {
   # $1: a directory inside a worktree. One key per worktree.
   printf '%s' "$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" |

@@ -65,6 +65,22 @@ Two modes:
 Every worktree gets its own install: the files sit inside the worktree, and the
 hook commands read `$CLAUDE_PROJECT_DIR`.
 
+### Work in another worktree
+
+A session's shell returns to the session's worktree after each command, so an
+agent reaches another worktree with `cd <worktree> && …` or `git -C <worktree>
+…`. `zim_git_dirs` in `zim-paths.sh` reads that path, and every hook that asks
+which worktree a command acts on asks it; a path it cannot read, such as a
+variable, makes the hook say so instead of judging the session's worktree.
+
+- The commit guard judges the worktree of the commit, with the session's copy
+  of the rules when that worktree's branch predates the install, as long as it
+  belongs to the same clone. It records the worktree for the session.
+- The `Stop` review and the Gemini `AfterAgent` review take the session's
+  worktree first, then each worktree the session committed in, and review the
+  first one that is due.
+- `/check-style` takes the worktree to review.
+
 The installer also registers the `AfterAgent` hook in `.gemini/settings.json`,
 which the Gemini CLI reads from the project. Gemini has no local settings
 variant, so local mode leaves that file alone when the branch tracks it. The
@@ -217,8 +233,8 @@ The deep review reads the target branch of the merge request first, through
 
 ## The state directory
 
-`~/.claude/zim-review-state/` holds four kinds of file, one set per worktree,
-for every project on the machine:
+`~/.claude/zim-review-state/` holds one set of these files per worktree, for
+every project on the machine, and one list per session:
 
 | file | meaning |
 | --- | --- |
@@ -227,6 +243,7 @@ for every project on the machine:
 | `<key>.passed` | the HEAD whose style review found nothing. The deep review requires it |
 | `<key>.review-approved` | your approval for one deep review. The guard deletes it when it lets one through |
 | `<key>.dismissed` | the findings the user chose to leave, one per line with the branch |
+| `session-<id>.worktrees` | the other worktrees a session committed in, which the review at the end of the turn visits |
 
 ## What it never does
 

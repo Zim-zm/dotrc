@@ -10,34 +10,16 @@ source "$(dirname "${BASH_SOURCE[0]}")/zim-rules.sh"
 input=$(cat)
 command=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 cwd=$(printf '%s' "$input" | jq -r '.cwd // ""')
+session=$(printf '%s' "$input" | jq -r '.session_id // ""')
 
-# The command position matters: prose inside a heredoc mentions a command
-# without running it.
-printf '%s' "$command" |
-  grep -qE '(^|[;&|(]|&&|\|\|)[[:space:]]*(WIP=1[[:space:]]+)?git[[:space:]]+(((-C|-c|--git-dir|--work-tree|--namespace|--exec-path)[= ][[:space:]]*[^ ]+|-[^ ]+)[[:space:]]+)*commit([[:space:]]|$)' ||
+# The hook runs in the session directory, and the command can reach another
+# worktree with cd or git -C.
+target=$(zim_git_dirs "$cwd" "$command" commit | head -1)
+if [ -z "$target" ]; then
+  zim_git_dirs "$cwd" "$command" commit | grep -q '^$' || exit 0
+  jq -n --arg c "The guard judged nothing. The command reaches the repository of its commit through a path the guard cannot read, so the guard cannot read its index. Name a literal path to get the mechanical checks." \
+    '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $c}}'
   exit 0
-
-# The hook runs in the session directory, and the command can name another
-# repository, with git -C or with a leading cd.
-named=$(printf '%s' "$command" | perl -0777 -ne '
-  exit unless /(?:^|[;&|(])\s*(?:WIP=1\s+)?git\s+((?:(?:(?:-C|-c|--git-dir|--work-tree|--namespace|--exec-path)[= ]\s*\S+|-\S+)\s+)*)commit\b/s;
-  my ($path) = $1 =~ /(?:^|\s)-C[= ]\s*(\S+)/;
-  print $path if defined $path;
-')
-[ -n "$named" ] ||
-  named=$(printf '%s' "$command" |
-    perl -0777 -ne 'print $1 if /^\s*cd\s+(\S+)\s*(?:&&|;)/')
-
-target="$cwd"
-if [ -n "$named" ]; then
-  case "$named" in /*) named_path="$named" ;; *) named_path="$cwd/$named" ;; esac
-  if [ -d "$named_path" ]; then
-    target="$named_path"
-  else
-    jq -n --arg c "The guard judged nothing. The command names the repository $named, and that path does not resolve here, so the guard cannot read its index. Name a literal path to get the mechanical checks." \
-      '{hookSpecificOutput: {hookEventName: "PreToolUse", additionalContext: $c}}'
-    exit 0
-  fi
 fi
 
 [ "$(git -C "$target" rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ] || exit 0
@@ -45,9 +27,15 @@ fi
 case "$target" in /tmp/*|*/scratchpad/*) exit 0 ;; esac
 
 # The guard judges a worktree of its own project, and no other: a commit in
-# another project answers to that project's guard, or to none.
+# another project answers to that project's guard, or to none. A worktree of
+# this clone belongs to the project even when its branch predates the install.
 target_policy="$(git -C "$target" rev-parse --show-toplevel 2>/dev/null)/hooks/commit/policy.sh"
-[ -f "$target_policy" ] && grep -q "^ZIM_PROJECT=$ZIM_PROJECT\$" "$target_policy" || exit 0
+common() { git -C "$1" rev-parse --path-format=absolute --git-common-dir 2>/dev/null; }
+if ! { [ -f "$target_policy" ] && grep -q "^ZIM_PROJECT=$ZIM_PROJECT\$" "$target_policy"; }; then
+  [ "$(common "$target")" = "$(common "$(dirname "${BASH_SOURCE[0]}")")" ] || exit 0
+fi
+
+zim_record_session_worktree "$session" "$cwd" "$target"
 
 git_dir=$(git -C "$target" rev-parse --git-dir 2>/dev/null)
 [ -f "$git_dir/MERGE_HEAD" ] && exit 0

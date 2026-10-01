@@ -8,11 +8,15 @@ description: Run the commit-style review of the current branch now, in a clean s
 This runs the review that the `Stop` hook runs, but now, and whatever the state
 of the tree.
 
-1. Run the gate from the worktree root:
+1. Run the gate from the session's worktree root:
 
    ```
-   hooks/commit/zim-review-gate.sh "$PWD" false --force
+   hooks/commit/zim-review-gate.sh <worktree> false --force
    ```
+
+   `<worktree>` is `"$PWD"` for the commits of the session's worktree. For
+   commits in another worktree, it is that worktree's root: the shell returns
+   to the session's worktree after each command.
 
 2. When the first line starts with `SKIP`, report that line and stop. The gate
    skips for a real reason only: the directory is no worktree, the base does not
@@ -51,7 +55,7 @@ When the user reads a finding or a note and decides to leave it, record the
 decision, with the finding as the sub-agent wrote it:
 
 ```
-hooks/commit/zim-review-gate.sh "$PWD" false --dismiss "<the finding>"
+hooks/commit/zim-review-gate.sh <worktree> false --dismiss "<the finding>"
 ```
 
 Every later review of the branch receives it and reports it no more. Record a

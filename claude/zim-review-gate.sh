@@ -4,6 +4,9 @@
 #
 # Usage: zim-review-gate.sh <cwd> <stop_hook_active> [mode] [argument]
 #
+# --session <id> reviews the first worktree that is due among <cwd> and the
+# other worktrees the session committed in, which zim-commit-guard.sh lists.
+#
 # --force reviews the branch even when a stop hook continues the turn, when the
 # tree is dirty, or when the review already ran for this HEAD. It still records
 # the reviewed sha, so the automatic review does not repeat it.
@@ -70,6 +73,18 @@ zim_commit_patches() {
 
 [ "$force" = false ] && [ "$stop_hook_active" = "true" ] &&
   skip "a stop hook already continues this turn"
+
+if [ "$mode" = "--session" ]; then
+  skips=()
+  while IFS= read -r dir; do
+    out=$("${BASH_SOURCE[0]}" "$dir" "$stop_hook_active")
+    case "$out" in
+      SKIP:*) skips+=("${out#SKIP: }") ;;
+      *) printf '%s\n' "$out"; exit 0 ;;
+    esac
+  done < <(printf '%s\n' "$cwd"; cat "$(zim_session_file "${4:-}")" 2>/dev/null)
+  skip "$(printf '%s; ' "${skips[@]}" | sed 's/; $//')"
+fi
 
 git -C "$cwd" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
   skip "$cwd is not a git worktree"
@@ -208,7 +223,8 @@ payload=$(
   echo "branch: $branch"
   echo "base: $base ($base_source)"
   echo "commits: $count"
-  echo "gate: $(cd "$toplevel" && realpath --relative-to="$toplevel" "${BASH_SOURCE[0]}")"
+  gate_top=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)
+  echo "gate: $(realpath --relative-to="$gate_top" "${BASH_SOURCE[0]}")"
   echo
 
   echo "=== THE PROCEDURE ==="
