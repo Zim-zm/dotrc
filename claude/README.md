@@ -79,7 +79,9 @@ variable, makes the hook say so instead of judging the session's worktree.
 - The `Stop` review and the Gemini `AfterAgent` review take the session's
   worktree first, then each worktree the session committed in, and review the
   first one that is due.
-- `/check-style` takes the worktree to review.
+- `/check-style` and `/deep-review` take the worktree to review; the
+  `ZIM-DEEP-REVIEW` marker names it, and the audit guard checks the approval
+  of that worktree.
 
 The installer also registers the `AfterAgent` hook in `.gemini/settings.json`,
 which the Gemini CLI reads from the project. Gemini has no local settings

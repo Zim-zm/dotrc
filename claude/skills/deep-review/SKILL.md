@@ -23,10 +23,14 @@ needed.
 **No target, or a reading of the claim** — review the branch. Run step 1 and
 step 2 first.
 
+`<worktree>` below is `"$PWD"` for the session's worktree. For a branch in
+another worktree, it is that worktree's root: the shell returns to the
+session's worktree after each command.
+
 ## 1. The style review passes first
 
 ```
-hooks/commit/zim-review-gate.sh "$PWD" false --check-pass
+hooks/commit/zim-review-gate.sh <worktree> false --check-pass
 ```
 
 - `PASSED`: go to step 2.
@@ -38,7 +42,7 @@ hooks/commit/zim-review-gate.sh "$PWD" false --check-pass
 ## 2. The brief
 
 ```
-hooks/commit/zim-review-gate.sh "$PWD" false --brief
+hooks/commit/zim-review-gate.sh <worktree> false --brief
 ```
 
 The brief names the base — the target branch of the merge request when one
@@ -71,7 +75,7 @@ When the user skips, drop the subject. Do not propose the same review again.
 When the user approves, record it:
 
 ```
-hooks/commit/zim-review-gate.sh "$PWD" false --approve-review "<the commits>"
+hooks/commit/zim-review-gate.sh <worktree> false --approve-review "<the commits>"
 ```
 
 ## 4. One sub-agent for the whole target
@@ -80,7 +84,9 @@ Spawn exactly one agent with the `Agent` tool:
 
 - `subagent_type`: `general-purpose`
 - `model`: `opus`
-- `prompt`: its **first line is `ZIM-DEEP-REVIEW`**, alone.
+- `prompt`: its **first line is `ZIM-DEEP-REVIEW`**, alone, or followed by
+  one space and `<worktree>` when that is another worktree than the
+  session's.
   `zim-audit-guard.sh` reads that marker, checks the approval, and consumes it.
   Without the marker the review escapes the approval; without an approval the
   spawn is blocked. One approval buys one review, so a second run needs a new
