@@ -137,10 +137,12 @@ add_command_hook() { # $1 event, $2 matcher, $3 command, $4 timeout
 }
 add_command_hook PreToolUse Bash "\"\$CLAUDE_PROJECT_DIR\"/$vendor/zim-commit-guard.sh" 30
 add_command_hook PreToolUse 'Agent|Task' "\"\$CLAUDE_PROJECT_DIR\"/$vendor/zim-audit-guard.sh" 10
+# An earlier install left its own prompt, so the prompt is refreshed in place.
 edit "$settings" --arg prompt "$(cat "$here/zim-stop-hook-prompt.txt")" '
+  def ours: .type == "agent" and (.prompt | test("zim-review-gate"));
   .hooks //= {} | .hooks.Stop //= []
-  | if any(.hooks.Stop[]; any(.hooks[]?; .type == "agent"
-      and (.prompt | test("zim-review-gate")))) then .
+  | if any(.hooks.Stop[]; any(.hooks[]?; ours))
+    then .hooks.Stop |= map(.hooks |= map(if ours then .prompt = $prompt else . end))
     else .hooks.Stop += [{hooks: [{type: "agent", prompt: $prompt,
            model: "claude-sonnet-5", timeout: 300}]}] end'
 edit "$settings" --arg gate "Bash($vendor/zim-review-gate.sh:*)" '
