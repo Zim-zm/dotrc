@@ -35,3 +35,9 @@ PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}__cd_up_erase_stale_prompt"
 # PROMPT_COMMAND rebuilds the prompt without adding a history entry.
 bind -x '"\C-x\C-]": __cd_up'
 bind '"\eI": "\C-x\C-]\C-m"'
+
+# Alt+I/J/K/L: arrow keys under the right hand.
+bind '"\ei": previous-history'
+bind '"\ek": next-history'
+bind '"\ej": backward-char'
+bind '"\el": forward-char'
